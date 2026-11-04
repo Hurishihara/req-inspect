@@ -14,3 +14,4 @@ export {
   REDACTED_HEADERS_DEFAULT,
   BODY_KEYS_DEFAULT,
 } from './options.js'
+export { RingStore } from './store.js'
