@@ -12,3 +12,7 @@ test('toCurl text body and no body', () => {
   expect(t).toBe(`curl -X PUT 'http://h/t' --data-raw 'a'\\''b'`)
   expect(toCurl(full({ url: '/n' }), 'http://h')).toBe(`curl -X GET 'http://h/n'`)
 })
+
+test('toCurl quotes unusual methods', () => {
+  expect(toCurl(full({ method: "A'B", url: '/m' }), 'http://h')).toBe(`curl -X 'A'\\''B' 'http://h/m'`)
+})
