@@ -1,5 +1,8 @@
 {
   "extends": "../../tsconfig.base.json",
-  "compilerOptions": { "types": ["node", "bun"] },
+  "compilerOptions": {
+    "types": ["node", "bun"],
+    "paths": { "@req-inspect/core": ["../core/src/index.ts"] }
+  },
   "include": ["src", "test"]
 }
