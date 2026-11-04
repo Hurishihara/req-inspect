@@ -20,15 +20,17 @@ export function inspector(options: InspectorOptions = {}): RequestHandler {
 
   return (req: Request, res: Response, next: NextFunction): void => {
     if (!enabled) return next()
-    if (insp.isInspectorPath(req.path)) return insp.handle(req, res)
-    if (insp.shouldIgnore(req.path)) return next()
+    const q = req.originalUrl.indexOf('?')
+    const pathname = q < 0 ? req.originalUrl : req.originalUrl.slice(0, q)
+    if (insp.isInspectorPath(pathname)) return insp.handle(req, res)
+    if (insp.shouldIgnore(pathname)) return next()
 
     const startedAt = Date.now()
     const t0 = performance.now()
     const chunks: Buffer[] = []
     let kept = 0
     let total = 0
-    let finished = false
+    let done = false
     // Route and params are only valid while the matched handler runs, so snapshot them on first write.
     let snap: { route: string | null; params: Record<string, string> } | undefined
     const snapshot = (): void => {
@@ -68,6 +70,8 @@ export function inspector(options: InspectorOptions = {}): RequestHandler {
     } as Response['end']
 
     const finalize = (aborted: boolean): void => {
+      if (done) return
+      done = true
       try {
         snapshot()
         const reqBody = captureParsedBody(req.body, req.headers['content-type'], max)
@@ -103,13 +107,8 @@ export function inspector(options: InspectorOptions = {}): RequestHandler {
       }
     }
 
-    res.once('finish', () => {
-      finished = true
-      finalize(false)
-    })
-    res.once('close', () => {
-      if (!finished) finalize(true)
-    })
+    res.once('finish', () => finalize(false))
+    res.once('close', () => finalize(true))
     next()
   }
 }

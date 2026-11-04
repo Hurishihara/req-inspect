@@ -114,3 +114,45 @@ test('ignore list', async () => {
   const all = await getRecords(ignoreServer.base)
   assert.equal(all.some((x) => x.url === '/health'), false)
 })
+
+test('close then finish records exactly once', async () => {
+  const express = await loadExpress()
+  const app = express()
+  app.use(inspector({ enabled: true }))
+  app.get('/late', (_req, res) => {
+    res.setHeader('content-length', '10')
+    res.write('12345')
+    setTimeout(() => res.end('67890'), 200)
+  })
+  const s = await start(app)
+  try {
+    await new Promise((resolve) => {
+      const req = httpRequest(`${s.base}/late`, (res) => {
+        res.once('data', () => req.destroy())
+        res.on('error', () => {})
+      })
+      req.on('error', resolve)
+      req.on('close', resolve)
+      req.end()
+    })
+    await new Promise((r) => setTimeout(r, 400))
+    const all = (await getRecords(s.base)).filter((x) => x.url === '/late')
+    assert.equal(all.length, 1)
+  } finally { await s.close() }
+})
+
+test('mounted under a prefix: absolute inspector path works and requests are captured', async () => {
+  const express = await loadExpress()
+  const app = express()
+  const mw = inspector({ enabled: true })
+  app.use('/x', mw)
+  app.get('/x/hello', (_req, res) => res.send('hi'))
+  app.use(mw)
+  const s = await start(app)
+  try {
+    assert.equal((await fetch(`${s.base}/_inspect/api/requests`)).status, 200)
+    await fetch(`${s.base}/x/hello`)
+    const r = await findRecord(s.base, (x) => x.url === '/x/hello')
+    assert.equal(r.status, 200)
+  } finally { await s.close() }
+})
