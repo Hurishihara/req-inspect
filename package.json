@@ -1,16 +1,23 @@
 {
   "name": "req-inspect-monorepo",
   "private": true,
-  "workspaces": ["packages/*", "examples/*"],
+  "workspaces": [
+    "packages/*",
+    "examples/*"
+  ],
   "scripts": {
     "build": "bun run --filter @req-inspect/core build && bun run --filter @req-inspect/dashboard build && bun run --filter @req-inspect/express build",
     "test": "bun test packages/*/test",
     "test:int": "node --test packages/express/test/integration/*.int.mjs",
-    "typecheck": "tsc -p packages/core && tsc -p packages/express && tsc -p packages/dashboard"
+    "typecheck": "tsc -p packages/core && tsc -p packages/express && tsc -p packages/dashboard",
+    "check:pkg": "publint packages/core && publint packages/express && attw --pack packages/core && attw --pack packages/express"
   },
   "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.5",
+    "@changesets/cli": "^3.0.3",
     "@types/bun": "1.4.4",
     "@types/node": "26.6.6",
+    "publint": "^0.3.25",
     "tsup": "9.0.0",
     "typescript": "6.0.2"
   }
