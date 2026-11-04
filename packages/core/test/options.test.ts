@@ -27,3 +27,11 @@ test('user redact lists extend defaults, headers lowercased', () => {
   expect(o.redact.bodyKeys).toContain('ssn')
   expect(o.redact.bodyKeys.some((k) => k instanceof RegExp && k.test('password'))).toBe(true)
 })
+test('auth requires non-empty user and pass', () => {
+  const bad = [{ user: '', pass: '' }, { user: 'a', pass: '' }, { user: '', pass: 'b' }, { user: 1, pass: 'b' }, { pass: 'b' }]
+  for (const auth of bad) {
+    expect(() => resolveOptions({ auth: auth as any }, {})).toThrow(
+      new TypeError('[req-inspect] auth.user and auth.pass must be non-empty strings'),
+    )
+  }
+})

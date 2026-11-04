@@ -12,11 +12,16 @@ function normalizePath(path: string): string {
   return p
 }
 
+const isNonEmptyString = (v: unknown): v is string => typeof v === 'string' && v.length > 0
+
 export function resolveOptions(
   opts: InspectorOptions = {},
   env: NodeJS.ProcessEnv = process.env,
 ): ResolvedOptions {
   const auth = opts.auth ?? null
+  if (auth !== null && !(isNonEmptyString(auth.user) && isNonEmptyString(auth.pass))) {
+    throw new TypeError('[req-inspect] auth.user and auth.pass must be non-empty strings')
+  }
   const enabled = opts.enabled ?? (env.NODE_ENV !== 'production' || auth !== null)
   return {
     path: normalizePath(opts.path ?? DEFAULT_PATH),
