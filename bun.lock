@@ -54,7 +54,7 @@
       "name": "@req-inspect/express",
       "version": "0.0.0",
       "dependencies": {
-        "@req-inspect/core": "workspace:*",
+        "@req-inspect/core": "^0.0.0",
       },
       "devDependencies": {
         "@types/express": "^4.17.21",
