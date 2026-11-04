@@ -15,6 +15,26 @@ function firstValue(v: HeaderValue): string | undefined {
   return Array.isArray(v) ? v[0] : v
 }
 
+/** Hostname of a Host header, lowercased, port and IPv6 brackets removed. */
+function hostname(host: string): string {
+  const h = host.trim().toLowerCase()
+  if (h.startsWith('[')) {
+    const end = h.indexOf(']')
+    return end < 0 ? '' : h.slice(1, end)
+  }
+  // A bare IPv6 address has several colons; only a single colon separates a port.
+  const colon = h.indexOf(':')
+  return colon >= 0 && colon === h.lastIndexOf(':') ? h.slice(0, colon) : h
+}
+
+// Without auth, a browser page on another origin could reach the dashboard through DNS rebinding;
+// such requests carry the attacker's hostname, so only localhost names are accepted.
+function isLocalHost(host: string | undefined): boolean {
+  if (host === undefined) return false
+  const name = hostname(host)
+  return name === 'localhost' || name.endsWith('.localhost') || name === '127.0.0.1' || name === '::1'
+}
+
 function parseBasic(header: string | undefined): { user: string; pass: string } | null {
   const m = header === undefined ? null : BASIC.exec(header)
   if (!m) return null
@@ -31,6 +51,7 @@ export function checkAccess(
   if (!auth) {
     const forwarded = req.headers['x-forwarded-for'] !== undefined || req.headers['forwarded'] !== undefined
     if (forwarded || req.remoteAddress === undefined || !LOOPBACK.has(req.remoteAddress)) return { ok: false, status: 403 }
+    if (!isLocalHost(firstValue(req.headers['host']))) return { ok: false, status: 403 }
     return { ok: true }
   }
   const creds = parseBasic(firstValue(req.headers['authorization']))

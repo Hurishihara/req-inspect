@@ -1,5 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
+import { request as httpRequest } from 'node:http'
 import { inspector } from '@req-inspect/express'
 import { loadExpress, start } from './helpers.mjs'
 
@@ -46,5 +47,18 @@ test('auth → 401 without credentials, 200 with', async () => {
       headers: { authorization: 'Basic ' + Buffer.from('u:p').toString('base64'), 'x-forwarded-for': '1.2.3.4' },
     })
     assert.equal(ok.status, 200)
+  } finally { await s.close() }
+})
+
+test('non-localhost Host header → 403 without auth (DNS rebinding)', async () => {
+  const s = await appWith({ enabled: true }, 'development')
+  const statusWithHost = (host) => new Promise((resolve, reject) => {
+    const req = httpRequest(`${s.base}/_inspect/api/requests`, { headers: { host } }, (res) => { res.resume(); resolve(res.statusCode) })
+    req.on('error', reject)
+    req.end()
+  })
+  try {
+    assert.equal(await statusWithHost('evil.example'), 403)
+    assert.equal(await statusWithHost('localhost:1234'), 200)
   } finally { await s.close() }
 })
