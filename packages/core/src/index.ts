@@ -15,3 +15,4 @@ export {
   BODY_KEYS_DEFAULT,
 } from './options.js'
 export { RingStore } from './store.js'
+export { captureParsedBody, captureRawBody } from './body.js'
