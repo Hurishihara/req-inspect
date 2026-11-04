@@ -47,3 +47,7 @@ test('raw: image → binary; zero bytes → none', () => {
   expect(captureRawBody([], 0, 'text/plain', undefined, MAX)).toEqual({ kind: 'none' })
   expect(captureRawBody([Buffer.from([1])], 1, 'image/png', undefined, MAX)).toMatchObject({ kind: 'binary', contentType: 'image/png' })
 })
+test('raw: application/javascript → binary', () => {
+  expect(captureRawBody([Buffer.from('var a=1')], 7, 'application/javascript', undefined, MAX))
+    .toEqual({ kind: 'binary', contentType: 'application/javascript', size: 7 })
+})

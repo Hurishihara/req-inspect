@@ -13,8 +13,7 @@ export function classifyContentType(ct: string | undefined): 'json' | 'text' | '
     t.startsWith('text/') ||
     t === 'application/x-www-form-urlencoded' ||
     t === 'application/xml' ||
-    t.endsWith('+xml') ||
-    t === 'application/javascript'
+    t.endsWith('+xml')
   ) return 'text'
   return 'binary'
 }
