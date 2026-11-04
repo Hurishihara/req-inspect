@@ -6,7 +6,7 @@
     "build": "bun run --filter @req-inspect/core build && bun run --filter @req-inspect/express build",
     "test": "bun test packages/*/test",
     "test:int": "node --test packages/express/test/integration/*.int.mjs",
-    "typecheck": "tsc -p packages/core && tsc -p packages/express"
+    "typecheck": "tsc -p packages/core && tsc -p packages/express && tsc -p packages/dashboard"
   },
   "devDependencies": {
     "@types/bun": "1.4.4",

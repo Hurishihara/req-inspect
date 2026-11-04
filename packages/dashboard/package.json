@@ -1,0 +1,15 @@
+{
+  "name": "@req-inspect/dashboard",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": { "build": "vite build" },
+  "dependencies": { "react": "18.3.1", "react-dom": "18.3.1" },
+  "devDependencies": {
+    "@req-inspect/core": "workspace:*",
+    "@types/react": "18.3.31",
+    "@types/react-dom": "18.3.7",
+    "@vitejs/plugin-react": "6.2.1",
+    "vite": "8.3.5"
+  }
+}
