@@ -1,3 +1,7 @@
+import type { IncomingMessage, ServerResponse } from 'node:http'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { createHandler } from './http.js'
 import { resolveOptions } from './options.js'
 import { redactBody, redactHeaders } from './redact.js'
 import { RingStore } from './store.js'
@@ -12,6 +16,7 @@ export interface Inspector {
   isInspectorPath(pathname: string): boolean
   shouldIgnore(pathname: string): boolean
   record(draft: RecordDraft): void
+  handle(req: IncomingMessage, res: ServerResponse): void
 }
 
 export function toSummary(r: RequestRecord): RequestSummary {
@@ -19,9 +24,11 @@ export function toSummary(r: RequestRecord): RequestSummary {
   return summary
 }
 
-export function createInspector(options: InspectorOptions = {}): Inspector {
+export function createInspector(options: InspectorOptions = {}, internal: { uiDir?: string } = {}): Inspector {
   const opts = resolveOptions(options)
   const store = new RingStore(opts.maxRequests)
+  const uiDir = internal.uiDir ?? join(dirname(fileURLToPath(import.meta.url)), 'ui')
+  const handle = createHandler(store, opts, uiDir)
 
   const redactCaptured = (b: CapturedBody): CapturedBody =>
     (b.kind === 'json' || b.kind === 'text') && typeof b.value !== 'string'
@@ -31,6 +38,7 @@ export function createInspector(options: InspectorOptions = {}): Inspector {
   return {
     options: opts,
     store,
+    handle,
     isInspectorPath: (p) => p === opts.path || p.startsWith(`${opts.path}/`),
     shouldIgnore: (p) => opts.ignore.some((i) => (typeof i === 'string' ? p.startsWith(i) : i.test(p))),
     record(draft) {
