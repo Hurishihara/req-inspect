@@ -16,3 +16,4 @@ export {
 } from './options.js'
 export { RingStore } from './store.js'
 export { captureParsedBody, captureRawBody } from './body.js'
+export { REDACTED, normalizeHeaders, redactHeaders, redactBody } from './redact.js'
