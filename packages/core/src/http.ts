@@ -5,6 +5,7 @@ import { checkAccess } from './guard.js'
 import { toSummary } from './inspector.js'
 import type { RingStore } from './store.js'
 import type { ResolvedOptions } from './types.js'
+import { warnOnce } from './warn.js'
 
 const CONTENT_TYPES: Record<string, string> = {
   '.js': 'text/javascript; charset=utf-8',
@@ -25,6 +26,16 @@ function sendJson(res: ServerResponse, status: number, body: unknown): void {
     'content-length': Buffer.byteLength(payload),
   })
   res.end(payload)
+}
+
+function fail(res: ServerResponse, err: unknown): void {
+  warnOnce('handler', err)
+  try {
+    if (!res.headersSent) sendJson(res, 500, { error: 'internal error' })
+    else res.destroy()
+  } catch {
+    res.destroy()
+  }
 }
 
 const notFound = (res: ServerResponse): void => sendJson(res, 404, { error: 'not found' })
@@ -106,7 +117,7 @@ export function createHandler(
   const mount = options.path === '/' ? '' : options.path
   const root = resolve(uiDir)
 
-  return (req, res) => {
+  const dispatch = (req: IncomingMessage, res: ServerResponse): unknown => {
     const access = checkAccess({ remoteAddress: req.socket.remoteAddress, headers: req.headers }, options.auth)
     if (!access.ok) {
       if (access.status === 401) res.setHeader('WWW-Authenticate', 'Basic realm="req-inspect"')
@@ -127,8 +138,8 @@ export function createHandler(
     const method = req.method ?? 'GET'
 
     if (method === 'GET') {
-      if (rest === '/') { void serveIndex(res, root); return }
-      if (rest.startsWith('/assets/')) { void serveAsset(res, root, rest.slice('/assets/'.length)); return }
+      if (rest === '/') { serveIndex(res, root).catch((e) => fail(res, e)); return }
+      if (rest.startsWith('/assets/')) { serveAsset(res, root, rest.slice('/assets/'.length)).catch((e) => fail(res, e)); return }
       if (rest === '/api/stream') return stream(res, req, store, keepAliveMs)
       if (rest === '/api/requests') {
         const n = Number(query.get('limit'))
@@ -147,5 +158,13 @@ export function createHandler(
       return res.end()
     }
     return notFound(res)
+  }
+
+  return (req, res) => {
+    try {
+      dispatch(req, res)
+    } catch (err) {
+      fail(res, err)
+    }
   }
 }

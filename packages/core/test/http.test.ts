@@ -70,6 +70,9 @@ test('path traversal → 404 and never leaks file contents', async () => {
     '/_inspect/assets/%00',
     '/_inspect/assets/app.js%00.txt',
     '/_inspect/assets/%E0%A4%A',
+    '/_inspect/assets/C:/Windows/win.ini',
+    '/_inspect/assets/%5c%5csrv%5cshare%5cx',
+    '/_inspect/assets//etc/passwd',
   ]
   for (const p of paths) {
     const r = await raw(base, p)
