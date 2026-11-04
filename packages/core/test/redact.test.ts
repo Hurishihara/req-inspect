@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test'
-import { REDACTED, normalizeHeaders, redactHeaders, redactBody } from '../src/redact.js'
+import { REDACTED, normalizeHeaders, redactHeaders, redactBody, redactUrl, scrubJsonText } from '../src/redact.js'
 import { BODY_KEYS_DEFAULT } from '../src/options.js'
 
 test('normalizeHeaders lowercases and joins', () => {
@@ -39,4 +39,12 @@ test('redactBody global/sticky regex is not stateful', () => {
 test('redactBody shared (non-cyclic) references are not marked circular', () => {
   const shared = { a: 1 }
   expect(redactBody({ x: shared, y: shared }, [])).toEqual({ x: { a: 1 }, y: { a: 1 } })
+})
+test('redactUrl decodes keys before matching and leaves fragments without keys alone', () => {
+  expect(redactUrl('/a?api%5Fkey=1&x=1&&=2&pass+word=3', [/api_key/i, 'pass word'])).toBe('/a?api%5Fkey=[redacted]&x=1&&=2&pass+word=[redacted]')
+  expect(redactUrl('/a?token', [/token/i])).toBe('/a?token=[redacted]')
+  expect(redactUrl('/a', [/token/i])).toBe('/a')
+})
+test('scrubJsonText leaves object and array values and non-matching keys', () => {
+  expect(scrubJsonText('{"a":"token","b":{"c":1},"d":[1]}', [/token|b|d/])).toBe('{"a":"token","b":{"c":1},"d":[1]}')
 })

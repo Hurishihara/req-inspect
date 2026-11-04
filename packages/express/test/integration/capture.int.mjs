@@ -130,3 +130,39 @@ test('mounted under a prefix: absolute inspector path works and requests are cap
     assert.equal(r.status, 200)
   } finally { await s.close() }
 })
+
+test('over-cap JSON bodies are redacted in both directions', async () => {
+  const express = await loadExpress()
+  const app = express()
+  app.use(inspector({ enabled: true, maxBodyBytes: 64 }))
+  app.use(express.json())
+  app.post('/echo', (_req, res) => res.json({ token: 'tok_live_abc', filler: 'y'.repeat(200) }))
+  const s = await start(app)
+  try {
+    await fetch(`${s.base}/echo`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ password: 'hunter2', filler: 'x'.repeat(200) }),
+    })
+    const r = await findRecord(s.base, (x) => x.url === '/echo')
+    assert.equal(r.request.body.truncated, true)
+    assert.equal(r.response.body.truncated, true)
+    const stored = JSON.stringify(r)
+    assert.equal(stored.includes('hunter2'), false)
+    assert.equal(stored.includes('tok_live_abc'), false)
+    assert.match(r.request.body.value, /"password":"\[redacted\]"/)
+    assert.match(r.response.body.value, /"token":"\[redacted\]"/)
+  } finally { await s.close() }
+})
+
+test('query string secrets are redacted in url and query', async () => {
+  await fetch(`${server.base}/api/users/7?token=qs_secret&api_key=k&page=2`)
+  const r = await findRecord(server.base, (x) => x.url.startsWith('/api/users/7?'))
+  assert.equal(r.url, '/api/users/7?token=[redacted]&api_key=[redacted]&page=2')
+  assert.equal(r.request.query.token, '[redacted]')
+  assert.equal(r.request.query.api_key, '[redacted]')
+  assert.equal(r.request.query.page, '2')
+  const stored = JSON.stringify(r)
+  assert.equal(stored.includes('qs_secret'), false)
+  assert.equal(stored.includes('=k'), false)
+})

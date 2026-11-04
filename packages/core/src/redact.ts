@@ -25,14 +25,16 @@ function isPlainObject(v: unknown): v is Record<string, unknown> {
   return proto === Object.prototype || proto === null
 }
 
-export function redactBody(value: unknown, keys: readonly (string | RegExp)[]): unknown {
+type KeyMatcher = (key: string) => boolean
+
+function keyMatcher(keys: readonly (string | RegExp)[]): KeyMatcher {
   const strings = new Set<string>()
   const patterns: RegExp[] = []
   for (const k of keys) {
     if (typeof k === 'string') strings.add(k.toLowerCase())
     else patterns.push(k)
   }
-  const matches = (key: string): boolean => {
+  return (key) => {
     if (strings.has(key.toLowerCase())) return true
     return patterns.some((re) => {
       re.lastIndex = 0 // g/y flags make test() stateful
@@ -41,6 +43,51 @@ export function redactBody(value: unknown, keys: readonly (string | RegExp)[]): 
       return hit
     })
   }
+}
+
+// `"key": value` where value is a string (possibly cut off by truncation), number, boolean or null.
+// Object and array values are not matched.
+const JSON_PAIR = /"((?:[^"\\]|\\.)*)"(\s*:\s*)(?:"(?:[^"\\]|\\.)*(?:"|\\?$)|-?\d[\d.eE+-]*|true|false|null)/g
+
+function decodeJsonKey(raw: string): string {
+  try {
+    return JSON.parse(`"${raw}"`) as string
+  } catch {
+    return raw
+  }
+}
+
+/** Key-based redaction for JSON text that could not be parsed, such as a truncated prefix. */
+export function scrubJsonText(text: string, keys: readonly (string | RegExp)[]): string {
+  const matches = keyMatcher(keys)
+  return text.replace(JSON_PAIR, (whole, rawKey: string, sep: string) =>
+    matches(decodeJsonKey(rawKey)) ? `"${rawKey}"${sep}"${REDACTED}"` : whole)
+}
+
+function decodeQueryKey(raw: string): string {
+  // URLSearchParams decodes '+' and percent escapes and never throws on malformed ones.
+  for (const k of new URLSearchParams(`${raw}=`).keys()) return k
+  return raw
+}
+
+/** Replaces the values of matching query-string keys with `[redacted]`; other parameters stay verbatim and in order. */
+export function redactUrl(url: string, keys: readonly (string | RegExp)[]): string {
+  const q = url.indexOf('?')
+  if (q < 0) return url
+  const matches = keyMatcher(keys)
+  let changed = false
+  const parts = url.slice(q + 1).split('&').map((part) => {
+    const eq = part.indexOf('=')
+    const rawKey = eq < 0 ? part : part.slice(0, eq)
+    if (rawKey === '' || !matches(decodeQueryKey(rawKey))) return part
+    changed = true
+    return `${rawKey}=${REDACTED}`
+  })
+  return changed ? `${url.slice(0, q + 1)}${parts.join('&')}` : url
+}
+
+export function redactBody(value: unknown, keys: readonly (string | RegExp)[]): unknown {
+  const matches = keyMatcher(keys)
   // Tracks only the current ancestor chain, so shared (non-cyclic) references are copied, not flagged.
   const ancestors = new Set<object>()
   const walk = (v: unknown): unknown => {

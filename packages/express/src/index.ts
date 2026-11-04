@@ -1,6 +1,5 @@
 import type { NextFunction, Request, RequestHandler, Response } from 'express'
 import {
-  captureParsedBody,
   captureRawBody,
   createInspector,
   normalizeHeaders,
@@ -74,7 +73,7 @@ export function inspector(options: InspectorOptions = {}): RequestHandler {
       done = true
       try {
         snapshot()
-        const reqBody = captureParsedBody(req.body, req.headers['content-type'], max)
+        const reqBody = insp.captureRequestBody(req.body, req.headers['content-type'])
         const resBody: CapturedBody =
           req.method === 'HEAD'
             ? { kind: 'none' }
