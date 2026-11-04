@@ -10,7 +10,8 @@
     "test": "bun test packages/*/test",
     "test:int": "node --test packages/express/test/integration/*.int.mjs",
     "typecheck": "tsc -p packages/core && tsc -p packages/express && tsc -p packages/dashboard",
-    "check:pkg": "node scripts/check-no-workspace-protocol.mjs && publint packages/core && publint packages/express && attw --pack packages/core && attw --pack packages/express"
+    "check:pkg": "node scripts/check-no-workspace-protocol.mjs && publint packages/core && publint packages/express && attw --pack packages/core && attw --pack packages/express",
+    "release": "bun run build && changeset publish"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",
