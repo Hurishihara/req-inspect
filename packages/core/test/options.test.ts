@@ -7,6 +7,7 @@ test('defaults', () => {
   expect(o.maxRequests).toBe(500); expect(o.maxBodyBytes).toBe(65536)
   expect([...o.redact.headers].sort()).toEqual(['authorization', 'cookie', 'set-cookie', 'x-api-key'])
   expect(o.auth).toBeNull()
+  expect(o.redact.bodyKeys.some((k) => k instanceof RegExp && k.test('apiKey'))).toBe(true)
 })
 test('path normalization', () => {
   expect(resolveOptions({ path: '/debug/' }, {}).path).toBe('/debug')
@@ -24,4 +25,5 @@ test('user redact lists extend defaults, headers lowercased', () => {
   expect(o.redact.headers.has('x-session')).toBe(true)
   expect(o.redact.headers.has('authorization')).toBe(true)
   expect(o.redact.bodyKeys).toContain('ssn')
+  expect(o.redact.bodyKeys.some((k) => k instanceof RegExp && k.test('password'))).toBe(true)
 })
