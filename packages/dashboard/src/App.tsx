@@ -1,13 +1,13 @@
 import { useEffect, useReducer, useRef } from 'react'
 import { clearAll, fetchList, subscribe } from './api'
+import { idFromHash } from './hash'
 import { initialState, reducer } from './reducer'
 import { RequestList } from './components/RequestList'
 import { DetailPane } from './components/DetailPane'
 
-const idFromHash = () => decodeURIComponent(location.hash.slice(1)) || null
 
 export function App() {
-  const [state, dispatch] = useReducer(reducer, { ...initialState, selectedId: idFromHash() })
+  const [state, dispatch] = useReducer(reducer, { ...initialState, selectedId: idFromHash(location.hash) })
   const prevConn = useRef(state.conn)
 
   useEffect(() => {
@@ -28,7 +28,7 @@ export function App() {
   }, [state.conn])
 
   useEffect(() => {
-    const onHash = () => dispatch({ type: 'select', id: idFromHash() })
+    const onHash = () => dispatch({ type: 'select', id: idFromHash(location.hash) })
     window.addEventListener('hashchange', onHash)
     return () => window.removeEventListener('hashchange', onHash)
   }, [])
