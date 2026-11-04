@@ -35,3 +35,8 @@ test('auth requires non-empty user and pass', () => {
     )
   }
 })
+test('path that normalizes to the root is rejected', () => {
+  for (const path of ['/', '', '///']) {
+    expect(() => resolveOptions({ path }, {})).toThrow(new TypeError('[req-inspect] path must not be the root'))
+  }
+})

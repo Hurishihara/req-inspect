@@ -49,13 +49,14 @@ The inspector must be mounted at the app root, with `app.use(inspector())` befor
 The inspector exposes request data, so it is locked down by default.
 
 - **Localhost only.** Without `auth`, only loopback connections are allowed. Requests carrying an `X-Forwarded-For` or `Forwarded` header are refused, so a same-host reverse proxy cannot expose the dashboard.
+- **Host check.** Without `auth`, the `Host` header must also name localhost (`localhost`, `*.localhost`, `127.0.0.1` or `[::1]`, any port), otherwise the request gets 403. This blocks DNS rebinding attacks from web pages in your browser.
 - **Production.** With `NODE_ENV=production` and no `auth`, both capture and the dashboard are disabled. The `enabled` option overrides this in either direction.
 - **Basic auth.** With `auth: { user, pass }`, HTTP basic auth is required (compared in constant time) and remote access is allowed. Use it behind HTTPS.
-- **Redaction.** Stored records never contain these by default:
+- **Redaction.** Before a record is stored, these values are replaced with `[redacted]`:
   - Headers `authorization`, `cookie`, `set-cookie` and `x-api-key` (add more with `redact.headers`).
-  - Body keys matching `/password|token|secret|apikey|api_key/i` (add more with `redact.bodyKeys`).
+  - Body and query-string keys matching `/password|token|secret|apikey|api_key/i` (add more with `redact.bodyKeys`). This covers parsed request bodies, JSON responses, the `query` object and the stored URL.
 
-  Redacted values are replaced with `[redacted]`.
+  JSON bodies larger than `maxBodyBytes` are stored as a truncated text prefix. Request bodies are redacted before truncation. For a truncated JSON response, matching keys with string, number, boolean or null values are scrubbed from the text; a matching key whose value is an object or array is not. Other text bodies, such as `text/plain` or XML, are stored as sent.
 
 ## Known limitations
 

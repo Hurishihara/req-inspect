@@ -43,15 +43,27 @@ export function inspector(options: InspectorOptions = {}): RequestHandler {
       try {
         snapshot()
         const chunk = args[0]
-        if (chunk === undefined || chunk === null || typeof chunk === 'function') return
+        if (typeof chunk !== 'string' && !(chunk instanceof Uint8Array)) return
         const enc = typeof args[1] === 'string' ? (args[1] as BufferEncoding) : 'utf8'
-        const buf = typeof chunk === 'string' ? Buffer.from(chunk, enc) : Buffer.from(chunk as Uint8Array)
-        total += buf.length
-        if (kept < max) {
-          const part = kept + buf.length > max ? buf.subarray(0, max - kept) : buf
-          chunks.push(Buffer.from(part)) // copy: the caller may reuse its buffer
-          kept += part.length
+        if (kept >= max) {
+          // Cap reached: only measure, never copy.
+          total += typeof chunk === 'string' ? Buffer.byteLength(chunk, enc) : (chunk as Uint8Array).byteLength
+          return
         }
+        const room = max - kept
+        let part: Buffer
+        if (typeof chunk === 'string') {
+          const buf = Buffer.from(chunk, enc) // already a private copy
+          total += buf.length
+          part = buf.length > room ? Buffer.from(buf.subarray(0, room)) : buf
+        } else {
+          const bytes = chunk as Uint8Array
+          total += bytes.byteLength
+          // Copy only the kept slice: the caller may reuse its buffer.
+          part = Buffer.from(bytes.subarray(0, Math.min(bytes.byteLength, room)))
+        }
+        chunks.push(part)
+        kept += part.length
       } catch (err) {
         warnOnce('capture', err)
       }
@@ -113,4 +125,3 @@ export function inspector(options: InspectorOptions = {}): RequestHandler {
 }
 
 export default inspector
-export { warnOnce }

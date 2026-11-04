@@ -125,7 +125,7 @@ test('SSE delivers record events and pings', async () => {
   const ac = new AbortController()
   const r = await fetch(base + '/_inspect/api/stream', { signal: ac.signal })
   expect(r.headers.get('content-type')).toContain('text/event-stream')
-  expect(r.headers.get('cache-control')).toBe('no-store')
+  expect(r.headers.get('cache-control')).toBe('no-store, no-transform')
   const reader = r.body!.getReader()
   const dec = new TextDecoder()
   let text = ''

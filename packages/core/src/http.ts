@@ -93,7 +93,7 @@ async function serveAsset(res: ServerResponse, uiDir: string, rawRest: string): 
 function stream(res: ServerResponse, req: IncomingMessage, store: RingStore, keepAliveMs: number): void {
   res.writeHead(200, {
     'content-type': 'text/event-stream',
-    'cache-control': 'no-store',
+    'cache-control': 'no-store, no-transform',
     connection: 'keep-alive',
   })
   res.flushHeaders()
