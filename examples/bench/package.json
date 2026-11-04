@@ -1,0 +1,12 @@
+{
+  "name": "req-inspect-bench",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@req-inspect/express": "workspace:*",
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "autocannon": "8.0.0"
+  }
+}

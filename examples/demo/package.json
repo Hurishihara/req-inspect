@@ -1,0 +1,9 @@
+{
+  "name": "req-inspect-demo",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@req-inspect/express": "workspace:*",
+    "express": "^5.1.0"
+  }
+}
