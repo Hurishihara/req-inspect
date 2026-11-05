@@ -1,11 +1,11 @@
 import { classifyContentType } from './body.js'
 import { redactBody, redactHeaders, redactUrl, scrubJsonText } from './redact.js'
-import type { CapturedBody, RecordDraft, RequestRecord, ResolvedOptions } from './types.js'
+import type { CapturedBody, RecordDraft, RequestRecord, InternalOptions } from './types.js'
 
 const redactCaptured = (
   b: CapturedBody,
   contentType: string | undefined,
-  keys: ResolvedOptions['redact']['bodyKeys'],
+  keys: InternalOptions['redact']['bodyKeys'],
 ): CapturedBody => {
   if (b.kind !== 'json' && b.kind !== 'text') return b
   if (typeof b.value !== 'string') return { ...b, value: redactBody(b.value, keys) }
@@ -17,7 +17,7 @@ const redactCaptured = (
 export const toRecord = (
   draft: RecordDraft,
   id: string,
-  redact: ResolvedOptions['redact'],
+  redact: InternalOptions['redact'],
 ): RequestRecord => {
   const keys = redact.bodyKeys
   const { request, response } = draft

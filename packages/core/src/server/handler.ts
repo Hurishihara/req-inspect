@@ -1,7 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { resolve } from 'node:path'
 
-import type { ResolvedOptions } from '../domain/types.js'
+import type { InternalOptions } from '../domain/types.js'
 import type { RingStore } from '../store/ring-store.js'
 import { warnOnce } from '../support/warn.js'
 import { clearRequests, getRequest, listRequests } from './api.js'
@@ -22,7 +22,7 @@ const fail = (res: ServerResponse, err: unknown): void => {
 
 export const createHandler = (
   store: RingStore,
-  options: ResolvedOptions,
+  options: InternalOptions,
   uiDir: string,
   keepAliveMs = 15000,
 ): ((req: IncomingMessage, res: ServerResponse) => void) => {
@@ -30,6 +30,10 @@ export const createHandler = (
   const root = resolve(uiDir)
 
   const dispatch = (req: IncomingMessage, res: ServerResponse): unknown => {
+    if (!options.enabled) {
+      notFound(res)
+      return
+    }
     const access = checkAccess(
       { remoteAddress: req.socket.remoteAddress, headers: req.headers },
       options.auth,

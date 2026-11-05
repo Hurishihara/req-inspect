@@ -1,6 +1,12 @@
+import { createServer } from 'node:http'
+import type { AddressInfo } from 'node:net'
+
 import { afterEach, expect, spyOn, test, type Mock } from 'bun:test'
 
-import { createInspectorInternals as createInspector } from '../src/inspector.js'
+import {
+  createInspector as createPublicInspector,
+  createInspectorInternals as createInspector,
+} from '../src/inspector.js'
 import { captureRawBody } from '../src/domain/body.js'
 import type { RecordDraft } from '../src/domain/types.js'
 
@@ -236,4 +242,74 @@ test('dispatch', () => {
   expect(createInspector({}).dispatch('/_inspectx')).toBe('capture')
   expect(i.dispatch('/users')).toBe('capture')
   expect(createInspector({ enabled: false }).dispatch('/_inspect')).toBe('skip')
+})
+
+test('disabled handle answers 404 without running the guard', async () => {
+  const i = createInspector({ enabled: false, auth: { user: 'u', pass: 'p' } })
+  const server = createServer((req, res) => {
+    i.handle(req, res)
+  })
+  await new Promise<void>((r) => server.listen(0, '127.0.0.1', r))
+  try {
+    const port = (server.address() as AddressInfo).port
+    const res = await fetch(`http://127.0.0.1:${String(port)}/_inspect/api/requests`)
+    expect(res.status).toBe(404)
+    expect(await res.json()).toEqual({ error: 'not found' })
+    expect(res.headers.get('content-type')).toBe('application/json; charset=utf-8')
+    expect(res.headers.get('cache-control')).toBe('no-store')
+    expect(res.headers.get('www-authenticate')).toBeNull()
+  } finally {
+    server.close()
+  }
+})
+test('disabled capture neither wraps the response nor stores a record', async () => {
+  const i = createInspector({ enabled: false })
+  const listeners: string[] = []
+  const write = () => true
+  const end = () => undefined
+  const res: any = {
+    write,
+    end,
+    once: (e: string) => listeners.push(e),
+    on: (e: string) => listeners.push(e),
+  }
+  const hooks = { route: () => null, params: () => ({}), query: () => ({}), body: () => undefined }
+  i.capture({ headers: {} } as any, res, hooks)
+  expect(res.write).toBe(write)
+  expect(res.end).toBe(end)
+  expect(listeners).toEqual([])
+  await tick()
+  expect(i.store.list()).toHaveLength(0)
+})
+test('public options are a frozen copy: mutating them does not stop redaction', async () => {
+  const pub = createPublicInspector({})
+  ;(pub.options.redact.headers as Set<string>).clear()
+  expect(Object.isFrozen(pub.options)).toBe(true)
+  expect(Object.isFrozen(pub.options.redact)).toBe(true)
+  expect(Object.isFrozen(pub.options.redact.bodyKeys)).toBe(true)
+  expect(Object.isFrozen(pub.options.ignore)).toBe(true)
+  const hooks = { route: () => null, params: () => ({}), query: () => ({}), body: () => undefined }
+  const server = createServer((req, res) => {
+    if (pub.dispatch(req.url ?? '/') === 'handle') {
+      pub.handle(req, res)
+      return
+    }
+    pub.capture(req, res, hooks)
+    res.end('ok')
+  })
+  await new Promise<void>((r) => server.listen(0, '127.0.0.1', r))
+  try {
+    const base = `http://127.0.0.1:${String((server.address() as AddressInfo).port)}`
+    await (await fetch(`${base}/hello`, { headers: { authorization: 'Bearer s3cret' } })).text()
+    await tick()
+    const list = (await (await fetch(`${base}/_inspect/api/requests`)).json()) as {
+      requests?: { id: string }[]
+    }
+    const id = (list.requests ?? (list as unknown as { id: string }[]))[0].id
+    const text = await (await fetch(`${base}/_inspect/api/requests/${id}`)).text()
+    expect(text).not.toContain('s3cret')
+    expect(text).toContain('[redacted]')
+  } finally {
+    server.close()
+  }
 })

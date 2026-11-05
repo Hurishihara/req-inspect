@@ -8,7 +8,7 @@ import { join } from 'node:path'
 import { afterAll, beforeAll, expect, test } from 'bun:test'
 
 import { createHandler } from '../../src/server/handler.js'
-import { createInspector } from '../../src/inspector.js'
+import { createInspectorInternals } from '../../src/inspector.js'
 import { resolveOptions } from '../../src/domain/options.js'
 import { RingStore } from '../../src/store/ring-store.js'
 import type { InspectorOptions, RequestRecord } from '../../src/domain/types.js'
@@ -232,7 +232,7 @@ test('custom mount path', async () => {
   expect((await fetch(b + '/dbg', { redirect: 'manual' })).headers.get('location')).toBe('/dbg/')
 })
 test('createInspector exposes handle using the given uiDir', async () => {
-  const insp = createInspector({}, { uiDir })
+  const insp = createInspectorInternals({}, { uiDir })
   const server = createServer(insp.handle)
   servers.push(server)
   await new Promise<void>((r) => server.listen(0, '127.0.0.1', r))

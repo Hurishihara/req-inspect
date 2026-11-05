@@ -10,6 +10,7 @@ import { redactBody } from './domain/redact.js'
 import type {
   CaptureHooks,
   CapturedBody,
+  InternalOptions,
   InspectorOptions,
   RecordDraft,
   ResolvedOptions,
@@ -19,14 +20,29 @@ import { RingStore } from './store/ring-store.js'
 import { warnOnce } from './support/warn.js'
 
 export interface Inspector {
-  options: Readonly<ResolvedOptions>
-  /** Tells an adapter what to do with a request path (without its query string). */
+  /** Frozen, read-only view of the resolved options. */
+  readonly options: ResolvedOptions
+  /**
+   * Tells an adapter what to do with a request path (the full original path, without its query string):
+   * `'handle'` for the dashboard path, `'skip'` when disabled or ignored, `'capture'` otherwise.
+   */
   dispatch: (pathname: string) => 'handle' | 'skip' | 'capture'
+  /**
+   * Serves the dashboard, API and live stream for a request that `dispatch` answered `'handle'`, after the
+   * access checks. Responds 404 when the inspector is disabled.
+   */
   handle: (req: IncomingMessage, res: ServerResponse) => void
+  /**
+   * Starts capturing a request that `dispatch` answered `'capture'`: wraps `res.write` and `res.end` and
+   * stores a redacted record when the response finishes or closes. Never throws; a failure warns once and
+   * leaves the response unaffected. Does nothing when the inspector is disabled.
+   */
   capture: (req: IncomingMessage, res: ServerResponse, hooks: CaptureHooks) => void
 }
 
 export interface InspectorInternals extends Inspector {
+  /** Mutable options the engine itself uses. */
+  options: InternalOptions
   store: RingStore
   isInspectorPath: (pathname: string) => boolean
   shouldIgnore: (pathname: string) => boolean
@@ -72,14 +88,25 @@ export const createInspectorInternals = (
       if (isInspectorPath(p)) return 'handle'
       return shouldIgnore(p) ? 'skip' : 'capture'
     },
-    capture: createNodeCapture({ maxBodyBytes: opts.maxBodyBytes, bodyKeys: keys, record }),
+    capture: opts.enabled
+      ? createNodeCapture({ maxBodyBytes: opts.maxBodyBytes, bodyKeys: keys, record })
+      : () => undefined,
   }
 }
 
-export const createInspector = (
-  options: InspectorOptions = {},
-  internal: { uiDir?: string } = {},
-): Inspector => {
-  const { options: resolved, dispatch, handle, capture } = createInspectorInternals(options, internal)
-  return { options: resolved, dispatch, handle, capture }
+// `Set` cannot be frozen, so the public view gets its own copy of the header set.
+const freezeOptions = (o: InternalOptions): ResolvedOptions =>
+  Object.freeze({
+    ...o,
+    auth: o.auth === null ? null : Object.freeze({ ...o.auth }),
+    ignore: Object.freeze([...o.ignore]),
+    redact: Object.freeze({
+      headers: new Set(o.redact.headers),
+      bodyKeys: Object.freeze([...o.redact.bodyKeys]),
+    }),
+  })
+
+export const createInspector = (options: InspectorOptions = {}): Inspector => {
+  const { options: resolved, dispatch, handle, capture } = createInspectorInternals(options)
+  return { options: freezeOptions(resolved), dispatch, handle, capture }
 }

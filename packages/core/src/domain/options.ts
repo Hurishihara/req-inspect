@@ -1,4 +1,4 @@
-import type { InspectorOptions, ResolvedOptions } from './types.js'
+import type { InspectorOptions, InternalOptions } from './types.js'
 
 export const DEFAULT_PATH = '/_inspect'
 export const DEFAULT_MAX_REQUESTS = 500
@@ -22,7 +22,7 @@ const isNonEmptyString = (v: unknown): v is string => typeof v === 'string' && v
 export const resolveOptions = (
   opts: InspectorOptions = {},
   env: NodeJS.ProcessEnv = process.env,
-): ResolvedOptions => {
+): InternalOptions => {
   const auth = opts.auth ?? null
   if (auth !== null && !(isNonEmptyString(auth.user) && isNonEmptyString(auth.pass))) {
     throw new TypeError('[req-inspect] auth.user and auth.pass must be non-empty strings')
