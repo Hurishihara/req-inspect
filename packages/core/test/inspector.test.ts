@@ -1,6 +1,6 @@
 import { afterEach, expect, spyOn, test, type Mock } from 'bun:test'
 
-import { createInspector } from '../src/inspector.js'
+import { createInspectorInternals as createInspector } from '../src/inspector.js'
 import { captureRawBody } from '../src/domain/body.js'
 import type { RecordDraft } from '../src/domain/types.js'
 

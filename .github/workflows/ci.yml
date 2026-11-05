@@ -17,8 +17,8 @@ jobs:
       - run: bun run lint
       - run: bun run format:check
       - run: bun run typecheck
-      - run: bun test packages/*/test
       - run: bun run build
+      - run: bun test packages/*/test
       - run: bun run check:pkg
 
   integration:

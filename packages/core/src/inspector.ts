@@ -19,23 +19,20 @@ import { RingStore } from './store/ring-store.js'
 import { warnOnce } from './support/warn.js'
 
 export interface Inspector {
-  options: ResolvedOptions
+  options: Readonly<ResolvedOptions>
+  /** Tells an adapter what to do with a request path (without its query string). */
+  dispatch: (pathname: string) => 'handle' | 'skip' | 'capture'
+  handle: (req: IncomingMessage, res: ServerResponse) => void
+  capture: (req: IncomingMessage, res: ServerResponse, hooks: CaptureHooks) => void
+}
+
+export interface InspectorInternals extends Inspector {
   store: RingStore
   isInspectorPath: (pathname: string) => boolean
   shouldIgnore: (pathname: string) => boolean
   /** Captures an already-parsed request body, redacting it before it is serialized and truncated. */
   captureRequestBody: (value: unknown, contentType: string | undefined) => CapturedBody
   record: (draft: RecordDraft) => void
-  handle: (req: IncomingMessage, res: ServerResponse) => void
-  /** Tells an adapter what to do with a request path (without its query string). */
-  dispatch: (pathname: string) => 'handle' | 'skip' | 'capture'
-  capture: (req: IncomingMessage, res: ServerResponse, hooks: CaptureHooks) => void
-}
-
-export type InspectorInternals = Inspector & {
-  store: RingStore
-  record: (draft: RecordDraft) => void
-  captureRequestBody: (value: unknown, contentType: string | undefined) => CapturedBody
 }
 
 export const createInspectorInternals = (
@@ -82,4 +79,7 @@ export const createInspectorInternals = (
 export const createInspector = (
   options: InspectorOptions = {},
   internal: { uiDir?: string } = {},
-): Inspector => createInspectorInternals(options, internal)
+): Inspector => {
+  const { options: resolved, dispatch, handle, capture } = createInspectorInternals(options, internal)
+  return { options: resolved, dispatch, handle, capture }
+}
