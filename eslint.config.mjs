@@ -1,3 +1,5 @@
+import { builtinModules } from 'node:module'
+
 import js from '@eslint/js'
 import boundaries from 'eslint-plugin-boundaries'
 import prettier from 'eslint-config-prettier'
@@ -11,6 +13,8 @@ import tseslint from 'typescript-eslint'
 // `mode: 'file'` is deliberate: single files only match with it in eslint-plugin-boundaries 7.x,
 // despite the deprecation warning.
 const boundaryElements = [
+  // Declared before `domain` so the public type file is its own element (first match wins).
+  { type: 'domain-types', pattern: 'packages/core/src/domain/types.ts', mode: 'file' },
   { type: 'domain', pattern: 'packages/core/src/domain/**' },
   { type: 'store', pattern: 'packages/core/src/store/**' },
   { type: 'capture', pattern: 'packages/core/src/capture/**' },
@@ -18,18 +22,20 @@ const boundaryElements = [
   { type: 'support', pattern: 'packages/core/src/support/**' },
   { type: 'composition', pattern: 'packages/core/src/inspector.ts', mode: 'file' },
   { type: 'entry', pattern: 'packages/core/src/index.ts', mode: 'file' },
-  { type: 'adapter', pattern: 'packages/express/src/**' },
   { type: 'dashboard', pattern: 'packages/dashboard/src/**' },
+  // Every other package is an adapter, so a new one is covered without touching this config.
+  { type: 'adapter', pattern: 'packages/*/src/**' },
 ]
 
 const layerPolicies = [
-  ['domain', ['domain', 'support']],
-  ['store', ['domain', 'support']],
-  ['capture', ['domain', 'support']],
-  ['server', ['domain', 'store', 'support', 'server']],
+  ['domain', ['domain', 'domain-types', 'support']],
+  ['domain-types', []],
+  ['store', ['store', 'domain', 'domain-types', 'support']],
+  ['capture', ['capture', 'domain', 'domain-types', 'support']],
+  ['server', ['domain', 'domain-types', 'store', 'support', 'server']],
   ['support', ['support']],
-  ['composition', ['domain', 'store', 'capture', 'server', 'support']],
-  ['entry', ['composition', 'domain']],
+  ['composition', ['domain', 'domain-types', 'store', 'capture', 'server', 'support']],
+  ['entry', ['composition', 'domain-types']],
 ].map(([from, to]) => ({
   from: { element: { type: from } },
   allow: { to: { element: { types: to } } },
@@ -91,12 +97,18 @@ export default tseslint.config(
     rules: {
       'no-restricted-imports': [
         'error',
-        { patterns: [{ group: ['node:*'], message: 'The domain layer must stay free of Node built-ins.' }] },
+        {
+          paths: builtinModules.map((name) => ({
+            name,
+            message: 'The domain layer must stay free of Node built-ins.',
+          })),
+          patterns: [{ group: ['node:*'], message: 'The domain layer must stay free of Node built-ins.' }],
+        },
       ],
     },
   },
   {
-    files: ['packages/express/src/**/*.ts'],
+    files: ['packages/!(core|dashboard)/src/**/*.ts'],
     rules: { 'no-restricted-imports': ['error', { patterns: coreSubpathPatterns }] },
   },
   {
