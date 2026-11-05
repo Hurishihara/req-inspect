@@ -1,0 +1,10 @@
+---
+'@req-inspect/core': minor
+'@req-inspect/express': minor
+---
+
+Layered core and adapter kit. Express middleware behaviour is unchanged.
+
+`@req-inspect/core` now exports only `createInspector` and types (`Inspector`, `CaptureHooks`, `CapturedBody`, `InspectorOptions`, `RequestRecord`, `RequestSummary`, `ResolvedOptions`). Removed exports: `resolveOptions`, `DEFAULT_PATH`, `DEFAULT_MAX_REQUESTS`, `DEFAULT_MAX_BODY_BYTES`, `REDACTED_HEADERS_DEFAULT`, `BODY_KEYS_DEFAULT`, `RingStore`, `captureParsedBody`, `captureRawBody`, `REDACTED`, `normalizeHeaders`, `redactHeaders`, `redactBody`, `checkAccess`, `AccessResult`, `toSummary`, `createHandler`, `warnOnce` and the `RecordDraft` type. `Inspector` no longer has `store`, `isInspectorPath`, `shouldIgnore`, `captureRequestBody` or `record`.
+
+Adapter authors use `Inspector.dispatch` to decide what to do with a request and `Inspector.capture` with `CaptureHooks` to record it.
