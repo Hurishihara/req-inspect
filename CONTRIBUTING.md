@@ -63,12 +63,12 @@ An adapter connects a framework to the inspector in three steps.
    - `'capture'`: call `inspector.capture(req, res, hooks)`, then pass the request on.
 3. Supply `CaptureHooks`, the framework-specific readers `capture` calls:
 
-| Hook       | Read when                            | Returns                                                      |
-| ---------- | ------------------------------------ | ------------------------------------------------------------ |
-| `route()`  | first `res.write` or `res.end`       | matched route pattern, or `null`. Only valid while handling. |
-| `params()` | first `res.write` or `res.end`       | route params                                                 |
-| `query()`  | when the response finishes or closes | parsed query                                                 |
-| `body()`   | when the response finishes or closes | the framework's parsed request body                          |
+| Hook       | Read when                                                                          | Returns                                                      |
+| ---------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| `route()`  | first `res.write` or `res.end`, at the latest when the response finishes or closes | matched route pattern, or `null`. Only valid while handling. |
+| `params()` | first `res.write` or `res.end`, at the latest when the response finishes or closes | route params                                                 |
+| `query()`  | when the response finishes or closes                                               | parsed query                                                 |
+| `body()`   | when the response finishes or closes                                               | the framework's parsed request body                          |
 
 Redaction happens in core: hand over raw values and do not redact in the adapter. `capture` never throws; if something fails it warns once and the response is unaffected.
 
