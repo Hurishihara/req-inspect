@@ -3,7 +3,7 @@ import type { RequestRecord } from '@req-inspect/core'
 const SKIP = new Set(['host', 'content-length', 'connection'])
 const q = (v: string) => `'${v.replace(/'/g, `'\\''`)}'`
 
-export function toCurl(r: RequestRecord, origin: string): string {
+export const toCurl = (r: RequestRecord, origin: string): string => {
   const method = /^[A-Z]+$/.test(r.method) ? r.method : q(r.method)
   const parts = ['curl', '-X', method, q(origin + r.url)]
   for (const [k, v] of Object.entries(r.request.headers)) {

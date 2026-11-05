@@ -2,7 +2,7 @@ import { useState } from 'react'
 
 const REDACTED = '[redacted]'
 
-function Node({ name, value, depth }: { name?: string; value: unknown; depth: number }) {
+const Node = ({ name, value, depth }: { name?: string; value: unknown; depth: number }) => {
   const [open, setOpen] = useState(depth < 2)
   const label = name !== undefined && <span className="key">{name}: </span>
   if (value === null || typeof value !== 'object') {
@@ -58,7 +58,7 @@ function Node({ name, value, depth }: { name?: string; value: unknown; depth: nu
   )
 }
 
-export function JsonTree({ value }: { value: unknown }) {
+export const JsonTree = ({ value }: { value: unknown }) => {
   return (
     <div className="jsontree">
       <Node value={value} depth={0} />

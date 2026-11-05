@@ -3,7 +3,7 @@ import type { CapturedBody } from '@req-inspect/core'
 import { formatSize } from '../format'
 import { JsonTree } from './JsonTree'
 
-export function BodyView({ body }: { body: CapturedBody }) {
+export const BodyView = ({ body }: { body: CapturedBody }) => {
   if (body.kind === 'none') return <p className="muted">No body</p>
   if (body.kind === 'binary') {
     const enc = body.encoding ? ` · ${body.encoding}` : ''
