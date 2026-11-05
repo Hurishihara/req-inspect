@@ -14,7 +14,8 @@ export function classifyContentType(ct: string | undefined): 'json' | 'text' | '
     t === 'application/x-www-form-urlencoded' ||
     t === 'application/xml' ||
     t.endsWith('+xml')
-  ) return 'text'
+  )
+    return 'text'
   return 'binary'
 }
 
@@ -23,7 +24,11 @@ function truncateText(buf: Buffer, maxBytes: number): { value: string; truncated
   return { value: (truncated ? buf.subarray(0, maxBytes) : buf).toString('utf8'), truncated }
 }
 
-export function captureParsedBody(value: unknown, contentType: string | undefined, maxBytes: number): CapturedBody {
+export function captureParsedBody(
+  value: unknown,
+  contentType: string | undefined,
+  maxBytes: number,
+): CapturedBody {
   if (value === undefined) return { kind: 'none' }
   if (Buffer.isBuffer(value)) {
     return { kind: 'binary', contentType: baseType(contentType) || OCTET, size: value.length }
@@ -32,7 +37,13 @@ export function captureParsedBody(value: unknown, contentType: string | undefine
     const buf = Buffer.from(value, 'utf8')
     return { kind: 'text', ...truncateText(buf, maxBytes), size: buf.length }
   }
-  if (typeof value === 'object' && value !== null && !contentType && !Array.isArray(value) && Object.keys(value).length === 0) {
+  if (
+    typeof value === 'object' &&
+    value !== null &&
+    !contentType &&
+    !Array.isArray(value) &&
+    Object.keys(value).length === 0
+  ) {
     return { kind: 'none' }
   }
   let json: string | undefined
@@ -56,16 +67,24 @@ export function captureRawBody(
 ): CapturedBody {
   if (totalSize === 0) return { kind: 'none' }
   if (contentEncoding) {
-    return { kind: 'binary', contentType: baseType(contentType) || OCTET, size: totalSize, encoding: contentEncoding }
+    return {
+      kind: 'binary',
+      contentType: baseType(contentType) || OCTET,
+      size: totalSize,
+      encoding: contentEncoding,
+    }
   }
   const kind = classifyContentType(contentType)
-  if (kind === 'binary') return { kind: 'binary', contentType: baseType(contentType) || OCTET, size: totalSize }
+  if (kind === 'binary')
+    return { kind: 'binary', contentType: baseType(contentType) || OCTET, size: totalSize }
   const { value, truncated } = truncateText(Buffer.concat(chunks), maxBytes)
   const isTruncated = totalSize > maxBytes
   if (kind === 'json' && !isTruncated) {
     try {
       return { kind: 'json', value: JSON.parse(value), truncated: false, size: totalSize }
-    } catch { /* fall through to text */ }
+    } catch {
+      /* fall through to text */
+    }
   }
   return { kind: 'text', value, truncated: isTruncated || truncated, size: totalSize }
 }

@@ -4,16 +4,24 @@ import type { Action, State } from '../reducer'
 
 const time = (t: number) => new Date(t).toLocaleTimeString()
 
-export function RequestList({ state, dispatch, onClear }: {
-  state: State; dispatch: Dispatch<Action>; onClear: () => void
+export function RequestList({
+  state,
+  dispatch,
+  onClear,
+}: {
+  state: State
+  dispatch: Dispatch<Action>
+  onClear: () => void
 }) {
-  const rows = state.items.filter(r => matchesFilter(r, state.filter))
+  const rows = state.items.filter((r) => matchesFilter(r, state.filter))
   return (
     <section className="list">
       <div className="toolbar">
         <input
-          type="search" placeholder="Filter: POST /users 5xx" value={state.filter}
-          onChange={e => dispatch({ type: 'filter', text: e.target.value })}
+          type="search"
+          placeholder="Filter: POST /users 5xx"
+          value={state.filter}
+          onChange={(e) => dispatch({ type: 'filter', text: e.target.value })}
         />
         <button onClick={() => dispatch({ type: state.paused ? 'resume' : 'pause' })}>
           {state.paused ? `Resume (${state.pending.length})` : 'Pause'}
@@ -23,7 +31,7 @@ export function RequestList({ state, dispatch, onClear }: {
       </div>
       <div className="rows">
         {rows.length === 0 && <div className="empty">No requests</div>}
-        {rows.map(r => (
+        {rows.map((r) => (
           <button
             key={r.id}
             className={`row s${Math.floor(r.status / 100)}${r.id === state.selectedId ? ' selected' : ''}`}

@@ -8,7 +8,11 @@ export function start(app) {
       const base = `http://127.0.0.1:${server.address().port}`
       resolve({
         base,
-        close: () => new Promise((r) => { server.closeAllConnections?.(); server.close(() => r()) }),
+        close: () =>
+          new Promise((r) => {
+            server.closeAllConnections?.()
+            server.close(() => r())
+          }),
       })
     })
     server.on('error', reject)

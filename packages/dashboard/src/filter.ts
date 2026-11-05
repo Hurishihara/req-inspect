@@ -4,7 +4,7 @@ const METHODS = new Set(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIO
 
 export function matchesFilter(s: RequestSummary, text: string): boolean {
   const tokens = text.split(/\s+/).filter(Boolean)
-  return tokens.every(t => {
+  return tokens.every((t) => {
     if (/^[1-5]xx$/i.test(t)) return Math.floor(s.status / 100) === Number(t[0])
     const up = t.toUpperCase()
     if (METHODS.has(up)) return s.method.toUpperCase() === up

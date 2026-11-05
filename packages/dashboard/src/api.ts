@@ -24,7 +24,7 @@ export function subscribe(
   onConn: (c: State['conn']) => void,
 ): () => void {
   const es = new EventSource('./api/stream')
-  es.addEventListener('record', e => onRecord(JSON.parse((e as MessageEvent).data)))
+  es.addEventListener('record', (e) => onRecord(JSON.parse((e as MessageEvent).data)))
   es.onopen = () => onConn('live')
   es.onerror = () => onConn('reconnecting')
   return () => es.close()

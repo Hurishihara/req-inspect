@@ -3,7 +3,12 @@ import type { InspectorOptions, ResolvedOptions } from './types.js'
 export const DEFAULT_PATH = '/_inspect'
 export const DEFAULT_MAX_REQUESTS = 500
 export const DEFAULT_MAX_BODY_BYTES = 65536
-export const REDACTED_HEADERS_DEFAULT: readonly string[] = ['authorization', 'cookie', 'set-cookie', 'x-api-key']
+export const REDACTED_HEADERS_DEFAULT: readonly string[] = [
+  'authorization',
+  'cookie',
+  'set-cookie',
+  'x-api-key',
+]
 export const BODY_KEYS_DEFAULT: readonly (string | RegExp)[] = [/password|token|secret|apikey|api_key/i]
 
 function normalizePath(path: string): string {
@@ -33,7 +38,10 @@ export function resolveOptions(
     maxBodyBytes: opts.maxBodyBytes ?? DEFAULT_MAX_BODY_BYTES,
     ignore: opts.ignore ?? [],
     redact: {
-      headers: new Set([...REDACTED_HEADERS_DEFAULT, ...(opts.redact?.headers ?? []).map((h) => h.toLowerCase())]),
+      headers: new Set([
+        ...REDACTED_HEADERS_DEFAULT,
+        ...(opts.redact?.headers ?? []).map((h) => h.toLowerCase()),
+      ]),
       bodyKeys: [...BODY_KEYS_DEFAULT, ...(opts.redact?.bodyKeys ?? [])],
     },
   }

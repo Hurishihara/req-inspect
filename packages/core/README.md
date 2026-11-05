@@ -21,11 +21,13 @@ import { createInspector } from '@req-inspect/core'
 const inspector = createInspector() // same options as the Express middleware
 const app = (req, res) => res.end('hello')
 
-http.createServer((req, res) => {
-  const { pathname } = new URL(req.url, 'http://x')
-  if (inspector.options.enabled && inspector.isInspectorPath(pathname)) return inspector.handle(req, res)
-  app(req, res)
-}).listen(3000)
+http
+  .createServer((req, res) => {
+    const { pathname } = new URL(req.url, 'http://x')
+    if (inspector.options.enabled && inspector.isInspectorPath(pathname)) return inspector.handle(req, res)
+    app(req, res)
+  })
+  .listen(3000)
 ```
 
 To capture traffic, build a `RecordDraft` for each finished request and pass it to `inspector.record(draft)`. Use `inspector.captureRequestBody(parsedBody, contentType)` for the request body and `captureRawBody(...)` for the response body. Redaction of headers, query strings and bodies happens inside `record`; drafts are unredacted.

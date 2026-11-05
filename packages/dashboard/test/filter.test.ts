@@ -4,8 +4,11 @@ import { sum } from './helpers'
 
 test('filter tokens', () => {
   const s = sum('r_000001', { method: 'POST', url: '/api/users', route: '/api/users', status: 503 })
-  expect(matchesFilter(s, 'post 5xx')).toBe(true); expect(matchesFilter(s, '/USERS')).toBe(true)
-  expect(matchesFilter(s, 'get')).toBe(false); expect(matchesFilter(s, '4xx')).toBe(false); expect(matchesFilter(s, '')).toBe(true)
+  expect(matchesFilter(s, 'post 5xx')).toBe(true)
+  expect(matchesFilter(s, '/USERS')).toBe(true)
+  expect(matchesFilter(s, 'get')).toBe(false)
+  expect(matchesFilter(s, '4xx')).toBe(false)
+  expect(matchesFilter(s, '')).toBe(true)
 })
 
 test('whitespace-only matches all; route and case-insensitive status class', () => {

@@ -8,7 +8,12 @@ import { redactBody, redactHeaders, redactUrl, scrubJsonText } from './redact.js
 import { RingStore } from './store.js'
 import { warnOnce } from './warn.js'
 import type {
-  CapturedBody, InspectorOptions, RecordDraft, RequestRecord, RequestSummary, ResolvedOptions,
+  CapturedBody,
+  InspectorOptions,
+  RecordDraft,
+  RequestRecord,
+  RequestSummary,
+  ResolvedOptions,
 } from './types.js'
 
 export interface Inspector {
@@ -27,7 +32,10 @@ export function toSummary(r: RequestRecord): RequestSummary {
   return summary
 }
 
-export function createInspector(options: InspectorOptions = {}, internal: { uiDir?: string } = {}): Inspector {
+export function createInspector(
+  options: InspectorOptions = {},
+  internal: { uiDir?: string } = {},
+): Inspector {
   const opts = resolveOptions(options)
   const store = new RingStore(opts.maxRequests)
   const uiDir = internal.uiDir ?? join(dirname(fileURLToPath(import.meta.url)), 'ui')
