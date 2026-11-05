@@ -1,8 +1,8 @@
 export const REDACTED = '[redacted]'
 
-export function normalizeHeaders(
+export const normalizeHeaders = (
   h: Record<string, string | string[] | number | undefined>,
-): Record<string, string> {
+): Record<string, string> => {
   const out: Record<string, string> = {}
   for (const [name, value] of Object.entries(h)) {
     if (value === undefined) continue
@@ -11,7 +11,7 @@ export function normalizeHeaders(
   return out
 }
 
-export function redactHeaders(h: Record<string, string>, names: Set<string>): Record<string, string> {
+export const redactHeaders = (h: Record<string, string>, names: Set<string>): Record<string, string> => {
   const out: Record<string, string> = {}
   for (const [name, value] of Object.entries(h)) {
     out[name] = names.has(name.toLowerCase()) ? REDACTED : value
@@ -19,15 +19,15 @@ export function redactHeaders(h: Record<string, string>, names: Set<string>): Re
   return out
 }
 
-function isPlainObject(v: unknown): v is Record<string, unknown> {
+const isPlainObject = (v: unknown): v is Record<string, unknown> => {
   if (typeof v !== 'object' || v === null) return false
-  const proto = Object.getPrototypeOf(v)
+  const proto: unknown = Object.getPrototypeOf(v)
   return proto === Object.prototype || proto === null
 }
 
 type KeyMatcher = (key: string) => boolean
 
-function keyMatcher(keys: readonly (string | RegExp)[]): KeyMatcher {
+const keyMatcher = (keys: readonly (string | RegExp)[]): KeyMatcher => {
   const strings = new Set<string>()
   const patterns: RegExp[] = []
   for (const k of keys) {
@@ -49,7 +49,7 @@ function keyMatcher(keys: readonly (string | RegExp)[]): KeyMatcher {
 // Object and array values are not matched.
 const JSON_PAIR = /"((?:[^"\\]|\\.)*)"(\s*:\s*)(?:"(?:[^"\\]|\\.)*(?:"|\\?$)|-?\d[\d.eE+-]*|true|false|null)/g
 
-function decodeJsonKey(raw: string): string {
+const decodeJsonKey = (raw: string): string => {
   try {
     return JSON.parse(`"${raw}"`) as string
   } catch {
@@ -58,21 +58,21 @@ function decodeJsonKey(raw: string): string {
 }
 
 /** Key-based redaction for JSON text that could not be parsed, such as a truncated prefix. */
-export function scrubJsonText(text: string, keys: readonly (string | RegExp)[]): string {
+export const scrubJsonText = (text: string, keys: readonly (string | RegExp)[]): string => {
   const matches = keyMatcher(keys)
   return text.replace(JSON_PAIR, (whole, rawKey: string, sep: string) =>
     matches(decodeJsonKey(rawKey)) ? `"${rawKey}"${sep}"${REDACTED}"` : whole,
   )
 }
 
-function decodeQueryKey(raw: string): string {
+const decodeQueryKey = (raw: string): string => {
   // URLSearchParams decodes '+' and percent escapes and never throws on malformed ones.
   for (const k of new URLSearchParams(`${raw}=`).keys()) return k
   return raw
 }
 
 /** Replaces the values of matching query-string keys with `[redacted]`; other parameters stay verbatim and in order. */
-export function redactUrl(url: string, keys: readonly (string | RegExp)[]): string {
+export const redactUrl = (url: string, keys: readonly (string | RegExp)[]): string => {
   const q = url.indexOf('?')
   if (q < 0) return url
   const matches = keyMatcher(keys)
@@ -87,10 +87,11 @@ export function redactUrl(url: string, keys: readonly (string | RegExp)[]): stri
       changed = true
       return `${rawKey}=${REDACTED}`
     })
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- `changed` is assigned inside the map callback, which control-flow analysis cannot see
   return changed ? `${url.slice(0, q + 1)}${parts.join('&')}` : url
 }
 
-export function redactBody(value: unknown, keys: readonly (string | RegExp)[]): unknown {
+export const redactBody = (value: unknown, keys: readonly (string | RegExp)[]): unknown => {
   const matches = keyMatcher(keys)
   // Tracks only the current ancestor chain, so shared (non-cyclic) references are copied, not flagged.
   const ancestors = new Set<object>()
@@ -103,7 +104,8 @@ export function redactBody(value: unknown, keys: readonly (string | RegExp)[]): 
     if (isArr) {
       out = (v as unknown[]).map(walk)
     } else {
-      const obj: Record<string, unknown> = Object.getPrototypeOf(v) === null ? Object.create(null) : {}
+      const obj: Record<string, unknown> =
+        Object.getPrototypeOf(v) === null ? (Object.create(null) as Record<string, unknown>) : {}
       for (const [k, val] of Object.entries(v)) {
         obj[k] = matches(k) ? REDACTED : walk(val)
       }

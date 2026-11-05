@@ -6,15 +6,19 @@ import { initialState, reducer } from './reducer'
 import { RequestList } from './components/RequestList'
 import { DetailPane } from './components/DetailPane'
 
-export function App() {
+export const App = () => {
   const [state, dispatch] = useReducer(reducer, { ...initialState, selectedId: idFromHash(location.hash) })
   const prevConn = useRef(state.conn)
 
   useEffect(() => {
     let alive = true
     fetchList()
-      .then((items) => alive && dispatch({ type: 'loaded', items }))
-      .catch(() => {})
+      .then((items) => {
+        if (alive) dispatch({ type: 'loaded', items })
+      })
+      .catch(() => {
+        /* list unavailable: the stream keeps the view live */
+      })
     const unsub = subscribe(
       (item) => {
         dispatch({ type: 'received', item })
@@ -35,7 +39,9 @@ export function App() {
         .then((items) => {
           dispatch({ type: 'loaded', items })
         })
-        .catch(() => {})
+        .catch(() => {
+          /* list unavailable: the stream keeps the view live */
+        })
     }
     prevConn.current = state.conn
   }, [state.conn])
@@ -69,7 +75,13 @@ export function App() {
 
   return (
     <div className="app">
-      <RequestList state={state} dispatch={dispatch} onClear={onClear} />
+      <RequestList
+        state={state}
+        dispatch={dispatch}
+        onClear={() => {
+          void onClear()
+        }}
+      />
       <DetailPane id={state.selectedId} />
     </div>
   )

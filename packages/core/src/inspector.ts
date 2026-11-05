@@ -28,15 +28,16 @@ export interface Inspector {
   handle: (req: IncomingMessage, res: ServerResponse) => void
 }
 
-export function toSummary(r: RequestRecord): RequestSummary {
+export const toSummary = (r: RequestRecord): RequestSummary => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- destructured only to omit these keys from the summary
   const { request: _request, response: _response, ...summary } = r
   return summary
 }
 
-export function createInspector(
+export const createInspector = (
   options: InspectorOptions = {},
   internal: { uiDir?: string } = {},
-): Inspector {
+): Inspector => {
   const opts = resolveOptions(options)
   const store = new RingStore(opts.maxRequests)
   const uiDir = internal.uiDir ?? join(dirname(fileURLToPath(import.meta.url)), 'ui')

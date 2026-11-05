@@ -12,12 +12,12 @@ const BASIC = /^basic\s+([A-Za-z0-9+/]+={0,2})\s*$/i
 const digest = (s: string): Buffer => createHash('sha256').update(s).digest()
 const safeEqual = (a: string, b: string): boolean => timingSafeEqual(digest(a), digest(b))
 
-function firstValue(v: HeaderValue): string | undefined {
+const firstValue = (v: HeaderValue): string | undefined => {
   return Array.isArray(v) ? v[0] : v
 }
 
 /** Hostname of a Host header, lowercased, port and IPv6 brackets removed. */
-function hostname(host: string): string {
+const hostname = (host: string): string => {
   const h = host.trim().toLowerCase()
   if (h.startsWith('[')) {
     const end = h.indexOf(']')
@@ -30,13 +30,13 @@ function hostname(host: string): string {
 
 // Without auth, a browser page on another origin could reach the dashboard through DNS rebinding;
 // such requests carry the attacker's hostname, so only localhost names are accepted.
-function isLocalHost(host: string | undefined): boolean {
+const isLocalHost = (host: string | undefined): boolean => {
   if (host === undefined) return false
   const name = hostname(host)
   return name === 'localhost' || name.endsWith('.localhost') || name === '127.0.0.1' || name === '::1'
 }
 
-function parseBasic(header: string | undefined): { user: string; pass: string } | null {
+const parseBasic = (header: string | undefined): { user: string; pass: string } | null => {
   const m = header === undefined ? null : BASIC.exec(header)
   if (!m) return null
   const decoded = Buffer.from(m[1], 'base64').toString('utf8')
@@ -45,10 +45,10 @@ function parseBasic(header: string | undefined): { user: string; pass: string } 
   return { user: decoded.slice(0, i), pass: decoded.slice(i + 1) }
 }
 
-export function checkAccess(
+export const checkAccess = (
   req: { remoteAddress: string | undefined; headers: Record<string, HeaderValue> },
   auth: ResolvedOptions['auth'],
-): AccessResult {
+): AccessResult => {
   if (!auth) {
     const forwarded = req.headers['x-forwarded-for'] !== undefined || req.headers.forwarded !== undefined
     if (forwarded || req.remoteAddress === undefined || !LOOPBACK.has(req.remoteAddress))

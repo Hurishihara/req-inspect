@@ -11,9 +11,7 @@ import {
 
 export type { InspectorOptions }
 
-type Header = string | string[] | number | undefined
-
-export function inspector(options: InspectorOptions = {}): RequestHandler {
+export const inspector = (options: InspectorOptions = {}): RequestHandler => {
   const insp = createInspector(options)
   const { enabled, maxBodyBytes: max } = insp.options
 
@@ -41,11 +39,14 @@ export function inspector(options: InspectorOptions = {}): RequestHandler {
     let done = false
     // Route and params are only valid while the matched handler runs, so snapshot them on first write.
     let snap: { route: string | null; params: Record<string, string> } | undefined
-    const snapshot = (): void => {
+    const snapshot = (): { route: string | null; params: Record<string, string> } => {
+      // req.route is undefined until Express matches a route, whatever its declared type says.
+      const route = req.route as { path: unknown } | undefined
       snap ??= {
-        route: req.route ? `${req.baseUrl}${req.route.path}` : null,
+        route: route ? `${req.baseUrl}${String(route.path)}` : null,
         params: { ...req.params },
       }
+      return snap
     }
 
     const collect = (args: unknown[]): void => {
@@ -78,22 +79,24 @@ export function inspector(options: InspectorOptions = {}): RequestHandler {
       }
     }
 
+    // eslint-disable-next-line @typescript-eslint/unbound-method -- called via apply(res, args)
     const origWrite = res.write as (...a: unknown[]) => boolean
+    // eslint-disable-next-line @typescript-eslint/unbound-method -- called via apply(res, args)
     const origEnd = res.end as (...a: unknown[]) => Response
-    res.write = function (this: Response, ...args: unknown[]): boolean {
+    res.write = ((...args: unknown[]): boolean => {
       collect(args)
-      return origWrite.apply(this, args)
-    } as Response['write']
-    res.end = function (this: Response, ...args: unknown[]): Response {
+      return origWrite.apply(res, args)
+    }) as Response['write']
+    res.end = ((...args: unknown[]): Response => {
       collect(args)
-      return origEnd.apply(this, args)
-    } as Response['end']
+      return origEnd.apply(res, args)
+    }) as Response['end']
 
     const finalize = (aborted: boolean): void => {
       if (done) return
       done = true
       try {
-        snapshot()
+        const captured = snapshot()
         const reqBody = insp.captureRequestBody(req.body, req.headers['content-type'])
         const resBody: CapturedBody =
           req.method === 'HEAD'
@@ -110,13 +113,13 @@ export function inspector(options: InspectorOptions = {}): RequestHandler {
           durationMs: Math.round((performance.now() - t0) * 10) / 10,
           method: req.method,
           url: req.originalUrl,
-          route: snap!.route,
+          route: captured.route,
           status: res.statusCode,
           ...(aborted ? { aborted: true as const } : {}),
           request: {
             headers: normalizeHeaders(req.headers),
             query: req.query,
-            params: snap!.params,
+            params: captured.params,
             body: reqBody.kind === 'binary' && reqBody.size === 0 ? { kind: 'none' } : reqBody,
           },
           response: { headers: normalizeHeaders(res.getHeaders()), body: resBody },

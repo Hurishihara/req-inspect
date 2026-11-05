@@ -15,7 +15,7 @@ import type { InspectorOptions, RequestRecord } from '../src/types.js'
 
 const uiDir = join(import.meta.dir, 'fixtures', 'ui')
 
-function rec(id: string): RequestRecord {
+const rec = (id: string): RequestRecord => {
   return {
     v: 1,
     id,
@@ -31,21 +31,21 @@ function rec(id: string): RequestRecord {
 }
 
 const servers: Server[] = []
-async function start(store: RingStore, opts: InspectorOptions, dir = uiDir): Promise<string> {
+const start = async (store: RingStore, opts: InspectorOptions, dir = uiDir): Promise<string> => {
   const handler = createHandler(store, resolveOptions(opts, {}), dir, 50)
   const server = createServer(handler)
   await new Promise<void>((r) => server.listen(0, '127.0.0.1', r))
   servers.push(server)
-  return `http://127.0.0.1:${(server.address() as AddressInfo).port}`
+  return `http://127.0.0.1:${String((server.address() as AddressInfo).port)}`
 }
 /** Raw request so dot segments / encodings reach the server unnormalized. */
-function raw(base: string, path: string): Promise<{ status: number; body: string }> {
+const raw = (base: string, path: string): Promise<{ status: number; body: string }> => {
   const u = new URL(base)
   return new Promise((resolve, reject) => {
     const req = rawRequest({ host: u.hostname, port: u.port, path, method: 'GET' }, (res) => {
       let body = ''
       res.on('data', (c) => {
-        body += c
+        body += String(c)
       })
       res.on('end', () => {
         resolve({ status: res.statusCode ?? 0, body })
@@ -126,9 +126,9 @@ test('list, get, 404, delete', async () => {
 })
 test('list honours limit and before; bad limit falls back to default', async () => {
   store.clear()
-  for (let i = 1; i <= 5; i++) store.add(rec(`r_00000${i}`))
+  for (let i = 1; i <= 5; i++) store.add(rec(`r_00000${String(i)}`))
   const ids = async (q: string) =>
-    ((await (await fetch(base + '/_inspect/api/requests' + q)).json()) as any[]).map((r) => r.id)
+    ((await (await fetch(base + '/_inspect/api/requests' + q)).json()) as { id: string }[]).map((r) => r.id)
   expect(await ids('?limit=2')).toEqual(['r_000005', 'r_000004'])
   expect(await ids('?before=r_000003&limit=1')).toEqual(['r_000002'])
   expect(await ids('?limit=abc')).toHaveLength(5)
@@ -236,6 +236,6 @@ test('createInspector exposes handle using the given uiDir', async () => {
   const server = createServer(insp.handle)
   servers.push(server)
   await new Promise<void>((r) => server.listen(0, '127.0.0.1', r))
-  const b = `http://127.0.0.1:${(server.address() as AddressInfo).port}`
+  const b = `http://127.0.0.1:${String((server.address() as AddressInfo).port)}`
   expect((await fetch(b + '/_inspect/')).status).toBe(200)
 })

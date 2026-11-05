@@ -9,7 +9,7 @@ import { JsonTree } from './JsonTree'
 type Tab = 'overview' | 'request' | 'response'
 type Loaded = { id: string; record: RequestRecord | null } | 'error'
 
-function Headers({ headers }: { headers: Record<string, string> }) {
+const Headers = ({ headers }: { headers: Record<string, string> }) => {
   const entries = Object.entries(headers)
   if (!entries.length) return <p className="muted">No headers</p>
   return (
@@ -30,18 +30,23 @@ const Message = ({ text }: { text: string }) => (
   </section>
 )
 
-export function DetailPane({ id }: { id: string | null }) {
+export const DetailPane = ({ id }: { id: string | null }) => {
   const [tab, setTab] = useState<Tab>('overview')
   const [loaded, setLoaded] = useState<Loaded | null>(null)
   const [copied, setCopied] = useState(false)
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- drop the previous record immediately when the selection changes so stale data is never shown
     setLoaded(null)
     if (!id) return
     let alive = true
     fetchRecord(id)
-      .then((record) => alive && setLoaded({ id, record }))
-      .catch(() => alive && setLoaded('error'))
+      .then((record) => {
+        if (alive) setLoaded({ id, record })
+      })
+      .catch(() => {
+        if (alive) setLoaded('error')
+      })
     return () => {
       alive = false
     }
@@ -49,7 +54,7 @@ export function DetailPane({ id }: { id: string | null }) {
 
   if (!id) return <Message text="Select a request" />
   if (loaded === 'error') return <Message text="Failed to load request." />
-  if (!loaded || loaded.id !== id) return <Message text="Loading…" />
+  if (loaded?.id !== id) return <Message text="Loading…" />
   const r = loaded.record
   if (!r) return <Message text="This request is no longer in memory." />
 
@@ -119,7 +124,12 @@ export function DetailPane({ id }: { id: string | null }) {
         )}
         {tab === 'request' && (
           <>
-            <button className="copy" onClick={copy}>
+            <button
+              className="copy"
+              onClick={() => {
+                void copy()
+              }}
+            >
               {copied ? 'Copied' : 'Copy as cURL'}
             </button>
             <h3>Headers</h3>

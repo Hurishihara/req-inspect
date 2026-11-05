@@ -1,4 +1,4 @@
-import { afterEach, expect, spyOn, test } from 'bun:test'
+import { afterEach, expect, spyOn, test, type Mock } from 'bun:test'
 
 import { createInspector, toSummary } from '../src/inspector.js'
 import { captureRawBody } from '../src/body.js'
@@ -71,14 +71,14 @@ test('shouldIgnore prefix and regexp', () => {
   expect(i.shouldIgnore('/users')).toBe(false)
 })
 
-let spy: ReturnType<typeof spyOn> | undefined
+let spy: Mock<Console['warn']> | undefined
 afterEach(() => {
   spy?.mockRestore()
   spy = undefined
 })
 
 test('record never throws and warns once', async () => {
-  spy = spyOn(console, 'warn').mockImplementation(() => {})
+  spy = spyOn(console, 'warn').mockImplementation(() => undefined)
   const i = createInspector({})
   const bad = () =>
     draft({
@@ -101,7 +101,7 @@ test('record never throws and warns once', async () => {
   expect(i.store.list()).toHaveLength(0)
 })
 test('record drops draft on RangeError from very deep body', async () => {
-  spy = spyOn(console, 'warn').mockImplementation(() => {})
+  spy = spyOn(console, 'warn').mockImplementation(() => undefined)
   const i = createInspector({})
   let deep: any = {}
   const root = deep
