@@ -3,7 +3,7 @@ import { expect, test } from 'bun:test'
 import { RingStore } from '../src/store.js'
 import type { RequestRecord } from '../src/types.js'
 
-function rec(id: string): RequestRecord {
+const rec = (id: string): RequestRecord => {
   return {
     v: 1,
     id,

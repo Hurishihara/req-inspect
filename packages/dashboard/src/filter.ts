@@ -2,7 +2,7 @@ import type { RequestSummary } from '@req-inspect/core'
 
 const METHODS = new Set(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'])
 
-export function matchesFilter(s: RequestSummary, text: string): boolean {
+export const matchesFilter = (s: RequestSummary, text: string): boolean => {
   const tokens = text.split(/\s+/).filter(Boolean)
   return tokens.every((t) => {
     if (/^[1-5]xx$/i.test(t)) return Math.floor(s.status / 100) === Number(t[0])

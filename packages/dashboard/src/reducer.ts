@@ -30,14 +30,14 @@ export const initialState: State = {
 const MAX = 500
 const num = (id: string) => Number(id.slice(id.lastIndexOf('_') + 1))
 
-function merge(existing: RequestSummary[], incoming: RequestSummary[]): RequestSummary[] {
+const merge = (existing: RequestSummary[], incoming: RequestSummary[]): RequestSummary[] => {
   const byId = new Map<string, RequestSummary>()
   for (const r of existing) byId.set(r.id, r)
   for (const r of incoming) byId.set(r.id, r)
   return [...byId.values()].sort((a, b) => num(b.id) - num(a.id)).slice(0, MAX)
 }
 
-export function reducer(s: State, a: Action): State {
+export const reducer = (s: State, a: Action): State => {
   switch (a.type) {
     case 'loaded':
       return { ...s, items: merge(s.items, a.items) }
