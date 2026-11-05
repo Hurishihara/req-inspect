@@ -13,7 +13,7 @@ export class RingStore {
   private readonly subs = new Set<(r: RequestRecord) => void>()
 
   constructor(private readonly capacity: number) {
-    this.buf = new Array(Math.max(1, Math.floor(capacity)))
+    this.buf = new Array<RequestRecord | undefined>(Math.max(1, Math.floor(capacity)))
   }
 
   nextId(): string {
@@ -37,7 +37,7 @@ export class RingStore {
   get(id: string): RequestRecord | undefined {
     for (let i = 0; i < this.size; i++) {
       const r = this.at(i)
-      if (r && r.id === id) return r
+      if (r?.id === id) return r
     }
     return undefined
   }

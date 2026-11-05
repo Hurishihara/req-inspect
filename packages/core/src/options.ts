@@ -11,7 +11,7 @@ export const REDACTED_HEADERS_DEFAULT: readonly string[] = [
 ]
 export const BODY_KEYS_DEFAULT: readonly (string | RegExp)[] = [/password|token|secret|apikey|api_key/i]
 
-function normalizePath(path: string): string {
+const normalizePath = (path: string): string => {
   let p = path.startsWith('/') ? path : `/${path}`
   while (p.length > 1 && p.endsWith('/')) p = p.slice(0, -1)
   return p
@@ -19,10 +19,10 @@ function normalizePath(path: string): string {
 
 const isNonEmptyString = (v: unknown): v is string => typeof v === 'string' && v.length > 0
 
-export function resolveOptions(
+export const resolveOptions = (
   opts: InspectorOptions = {},
   env: NodeJS.ProcessEnv = process.env,
-): ResolvedOptions {
+): ResolvedOptions => {
   const auth = opts.auth ?? null
   if (auth !== null && !(isNonEmptyString(auth.user) && isNonEmptyString(auth.pass))) {
     throw new TypeError('[req-inspect] auth.user and auth.pass must be non-empty strings')

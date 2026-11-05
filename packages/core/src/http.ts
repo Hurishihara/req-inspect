@@ -19,7 +19,7 @@ const CONTENT_TYPES: Record<string, string> = {
   '.json': 'application/json; charset=utf-8',
 }
 
-function sendJson(res: ServerResponse, status: number, body: unknown): void {
+const sendJson = (res: ServerResponse, status: number, body: unknown): void => {
   const payload = JSON.stringify(body)
   res.writeHead(status, {
     'content-type': 'application/json; charset=utf-8',
@@ -29,7 +29,7 @@ function sendJson(res: ServerResponse, status: number, body: unknown): void {
   res.end(payload)
 }
 
-function fail(res: ServerResponse, err: unknown): void {
+const fail = (res: ServerResponse, err: unknown): void => {
   warnOnce('handler', err)
   try {
     if (!res.headersSent) sendJson(res, 500, { error: 'internal error' })
@@ -43,7 +43,7 @@ const notFound = (res: ServerResponse): void => {
   sendJson(res, 404, { error: 'not found' })
 }
 
-function decode(s: string): string | null {
+const decode = (s: string): string | null => {
   try {
     const d = decodeURIComponent(s)
     return d.includes('\0') ? null : d
@@ -52,7 +52,7 @@ function decode(s: string): string | null {
   }
 }
 
-async function sendFile(res: ServerResponse, file: string): Promise<void> {
+const sendFile = async (res: ServerResponse, file: string): Promise<void> => {
   let data: Buffer
   try {
     data = await readFile(file)
@@ -68,7 +68,7 @@ async function sendFile(res: ServerResponse, file: string): Promise<void> {
   res.end(data)
 }
 
-async function serveIndex(res: ServerResponse, uiDir: string): Promise<void> {
+const serveIndex = async (res: ServerResponse, uiDir: string): Promise<void> => {
   let data: Buffer
   try {
     data = await readFile(resolve(uiDir, 'index.html'))
@@ -85,7 +85,7 @@ async function serveIndex(res: ServerResponse, uiDir: string): Promise<void> {
   res.end(data)
 }
 
-async function serveAsset(res: ServerResponse, uiDir: string, rawRest: string): Promise<void> {
+const serveAsset = async (res: ServerResponse, uiDir: string, rawRest: string): Promise<void> => {
   const rel = decode(rawRest)
   if (rel === null || rel === '') {
     notFound(res)
@@ -100,7 +100,7 @@ async function serveAsset(res: ServerResponse, uiDir: string, rawRest: string): 
   return sendFile(res, target)
 }
 
-function stream(res: ServerResponse, req: IncomingMessage, store: RingStore, keepAliveMs: number): void {
+const stream = (res: ServerResponse, req: IncomingMessage, store: RingStore, keepAliveMs: number): void => {
   res.writeHead(200, {
     'content-type': 'text/event-stream',
     'cache-control': 'no-store, no-transform',
@@ -118,12 +118,12 @@ function stream(res: ServerResponse, req: IncomingMessage, store: RingStore, kee
   })
 }
 
-export function createHandler(
+export const createHandler = (
   store: RingStore,
   options: ResolvedOptions,
   uiDir: string,
   keepAliveMs = 15000,
-): (req: IncomingMessage, res: ServerResponse) => void {
+): ((req: IncomingMessage, res: ServerResponse) => void) => {
   const mount = options.path === '/' ? '' : options.path
   const root = resolve(uiDir)
 
@@ -156,13 +156,13 @@ export function createHandler(
 
     if (method === 'GET') {
       if (rest === '/') {
-        serveIndex(res, root).catch((e) => {
+        serveIndex(res, root).catch((e: unknown) => {
           fail(res, e)
         })
         return
       }
       if (rest.startsWith('/assets/')) {
-        serveAsset(res, root, rest.slice('/assets/'.length)).catch((e) => {
+        serveAsset(res, root, rest.slice('/assets/'.length)).catch((e: unknown) => {
           fail(res, e)
         })
         return
@@ -182,7 +182,8 @@ export function createHandler(
       if (rest.startsWith('/api/requests/')) {
         const id = decode(rest.slice('/api/requests/'.length))
         const record = id === null ? undefined : store.get(id)
-        record ? sendJson(res, 200, record) : notFound(res)
+        if (record) sendJson(res, 200, record)
+        else notFound(res)
         return
       }
     } else if (method === 'DELETE' && rest === '/api/requests') {
@@ -190,7 +191,7 @@ export function createHandler(
       res.writeHead(204, { 'cache-control': 'no-store' })
       return res.end()
     }
-    return notFound(res)
+    notFound(res)
   }
 
   return (req, res) => {

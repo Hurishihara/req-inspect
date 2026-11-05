@@ -15,7 +15,7 @@ test('close followed by finish records exactly once', async () => {
     })
   })
   await new Promise<void>((r) => server.listen(0, '127.0.0.1', r))
-  const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`
+  const base = `http://127.0.0.1:${String((server.address() as AddressInfo).port)}`
   try {
     expect((await fetch(`${base}/a`)).status).toBe(200)
     await new Promise((r) => setTimeout(r, 50))
