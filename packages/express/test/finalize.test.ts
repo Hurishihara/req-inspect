@@ -1,6 +1,8 @@
-import { test, expect } from 'bun:test'
 import { createServer } from 'node:http'
 import type { AddressInfo } from 'node:net'
+
+import { test, expect } from 'bun:test'
+
 import { inspector } from '../src/index.js'
 
 test('close followed by finish records exactly once', async () => {

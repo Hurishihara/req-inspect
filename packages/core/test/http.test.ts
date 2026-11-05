@@ -1,10 +1,12 @@
-import { afterAll, beforeAll, expect, test } from 'bun:test'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { createServer, request as rawRequest } from 'node:http'
 import type { Server } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+
+import { afterAll, beforeAll, expect, test } from 'bun:test'
+
 import { createHandler } from '../src/http.js'
 import { createInspector } from '../src/inspector.js'
 import { resolveOptions } from '../src/options.js'
@@ -45,7 +47,9 @@ function raw(base: string, path: string): Promise<{ status: number; body: string
       res.on('data', (c) => {
         body += c
       })
-      res.on('end', () => resolve({ status: res.statusCode ?? 0, body }))
+      res.on('end', () => {
+        resolve({ status: res.statusCode ?? 0, body })
+      })
     })
     req.on('error', reject)
     req.end()
@@ -115,7 +119,7 @@ test('list, get, 404, delete', async () => {
   expect(list[0].request).toBeUndefined()
   const one = await fetch(base + '/_inspect/api/requests/r_000001')
   expect(one.status).toBe(200)
-  expect(((await one.json()) as any).request).toBeDefined()
+  expect((await one.json()).request).toBeDefined()
   expect((await fetch(base + '/_inspect/api/requests/r_999999')).status).toBe(404)
   expect((await fetch(base + '/_inspect/api/requests', { method: 'DELETE' })).status).toBe(204)
   expect(store.list()).toEqual([])
@@ -150,7 +154,9 @@ test('SSE delivers record events and pings', async () => {
   const reader = r.body!.getReader()
   const dec = new TextDecoder()
   let text = ''
-  setTimeout(() => store.add(rec('r_000042')), 20)
+  setTimeout(() => {
+    store.add(rec('r_000042'))
+  }, 20)
   const deadline = Date.now() + 3000
   while (Date.now() < deadline && !(text.includes('event: record') && text.includes(': ping'))) {
     const { value, done } = await reader.read()

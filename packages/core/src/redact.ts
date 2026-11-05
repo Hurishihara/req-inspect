@@ -104,7 +104,7 @@ export function redactBody(value: unknown, keys: readonly (string | RegExp)[]): 
       out = (v as unknown[]).map(walk)
     } else {
       const obj: Record<string, unknown> = Object.getPrototypeOf(v) === null ? Object.create(null) : {}
-      for (const [k, val] of Object.entries(v as Record<string, unknown>)) {
+      for (const [k, val] of Object.entries(v)) {
         obj[k] = matches(k) ? REDACTED : walk(val)
       }
       out = obj

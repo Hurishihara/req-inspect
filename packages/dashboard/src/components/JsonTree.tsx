@@ -28,7 +28,13 @@ function Node({ name, value, depth }: { name?: string; value: unknown; depth: nu
   return (
     <div>
       <div className="jt-line">
-        <button className="toggle" onClick={() => setOpen(!open)} aria-label={open ? 'collapse' : 'expand'}>
+        <button
+          className="toggle"
+          onClick={() => {
+            setOpen(!open)
+          }}
+          aria-label={open ? 'collapse' : 'expand'}
+        >
           {open ? '▾' : '▸'}
         </button>
         {label}

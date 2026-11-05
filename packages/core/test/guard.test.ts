@@ -1,4 +1,5 @@
 import { expect, test } from 'bun:test'
+
 import { checkAccess } from '../src/guard.js'
 
 const basic = (u: string, p: string) => 'Basic ' + Buffer.from(`${u}:${p}`).toString('base64')

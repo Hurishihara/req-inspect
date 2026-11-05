@@ -1,4 +1,5 @@
 import { expect, test } from 'bun:test'
+
 import { RingStore } from '../src/store.js'
 import type { RequestRecord } from '../src/types.js'
 
@@ -25,7 +26,9 @@ test('ids are monotonic and zero-padded', () => {
 })
 test('evicts oldest beyond capacity', () => {
   const s = new RingStore(2)
-  ;['r_000001', 'r_000002', 'r_000003'].forEach((id) => s.add(rec(id)))
+  ;['r_000001', 'r_000002', 'r_000003'].forEach((id) => {
+    s.add(rec(id))
+  })
   expect(s.get('r_000001')).toBeUndefined()
   expect(s.get('r_000003')?.id).toBe('r_000003')
   expect(s.list().map((r) => r.id)).toEqual(['r_000003', 'r_000002'])
@@ -37,7 +40,9 @@ test('list paging with before and limit', () => {
 })
 test('evicted before-cursor returns older survivors only', () => {
   const s = new RingStore(2)
-  ;['r_000001', 'r_000002', 'r_000003'].forEach((id) => s.add(rec(id)))
+  ;['r_000001', 'r_000002', 'r_000003'].forEach((id) => {
+    s.add(rec(id))
+  })
   expect(s.list({ before: 'r_000001' })).toEqual([])
   expect(s.list({ before: 'r_000003' }).map((r) => r.id)).toEqual(['r_000002'])
 })

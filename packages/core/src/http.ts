@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { extname, resolve, sep } from 'node:path'
+
 import { checkAccess } from './guard.js'
 import { toSummary } from './inspector.js'
 import type { RingStore } from './store.js'
@@ -38,7 +39,9 @@ function fail(res: ServerResponse, err: unknown): void {
   }
 }
 
-const notFound = (res: ServerResponse): void => sendJson(res, 404, { error: 'not found' })
+const notFound = (res: ServerResponse): void => {
+  sendJson(res, 404, { error: 'not found' })
+}
 
 function decode(s: string): string | null {
   try {
@@ -54,7 +57,8 @@ async function sendFile(res: ServerResponse, file: string): Promise<void> {
   try {
     data = await readFile(file)
   } catch {
-    return notFound(res)
+    notFound(res)
+    return
   }
   res.writeHead(200, {
     'content-type': CONTENT_TYPES[extname(file).toLowerCase()] ?? 'application/octet-stream',
@@ -74,7 +78,7 @@ async function serveIndex(res: ServerResponse, uiDir: string): Promise<void> {
     return
   }
   res.writeHead(200, {
-    'content-type': CONTENT_TYPES['.html']!,
+    'content-type': CONTENT_TYPES['.html'],
     'content-length': data.length,
     'x-content-type-options': 'nosniff',
   })
@@ -83,10 +87,16 @@ async function serveIndex(res: ServerResponse, uiDir: string): Promise<void> {
 
 async function serveAsset(res: ServerResponse, uiDir: string, rawRest: string): Promise<void> {
   const rel = decode(rawRest)
-  if (rel === null || rel === '') return notFound(res)
+  if (rel === null || rel === '') {
+    notFound(res)
+    return
+  }
   const assetsDir = resolve(uiDir, 'assets')
   const target = resolve(uiDir, 'assets', rel)
-  if (!target.startsWith(assetsDir + sep)) return notFound(res)
+  if (!target.startsWith(assetsDir + sep)) {
+    notFound(res)
+    return
+  }
   return sendFile(res, target)
 }
 
@@ -124,7 +134,8 @@ export function createHandler(
     )
     if (!access.ok) {
       if (access.status === 401) res.setHeader('WWW-Authenticate', 'Basic realm="req-inspect"')
-      return sendJson(res, access.status, { error: access.status === 401 ? 'unauthorized' : 'forbidden' })
+      sendJson(res, access.status, { error: access.status === 401 ? 'unauthorized' : 'forbidden' })
+      return
     }
 
     const url = (req as IncomingMessage & { originalUrl?: string }).originalUrl ?? req.url ?? '/'
@@ -136,31 +147,43 @@ export function createHandler(
       res.writeHead(302, { Location: `${mount}/` })
       return res.end()
     }
-    if (!pathname.startsWith(`${mount}/`)) return notFound(res)
+    if (!pathname.startsWith(`${mount}/`)) {
+      notFound(res)
+      return
+    }
     const rest = pathname.slice(mount.length) // always starts with '/'
     const method = req.method ?? 'GET'
 
     if (method === 'GET') {
       if (rest === '/') {
-        serveIndex(res, root).catch((e) => fail(res, e))
+        serveIndex(res, root).catch((e) => {
+          fail(res, e)
+        })
         return
       }
       if (rest.startsWith('/assets/')) {
-        serveAsset(res, root, rest.slice('/assets/'.length)).catch((e) => fail(res, e))
+        serveAsset(res, root, rest.slice('/assets/'.length)).catch((e) => {
+          fail(res, e)
+        })
         return
       }
-      if (rest === '/api/stream') return stream(res, req, store, keepAliveMs)
+      if (rest === '/api/stream') {
+        stream(res, req, store, keepAliveMs)
+        return
+      }
       if (rest === '/api/requests') {
         const n = Number(query.get('limit'))
         const limit =
           query.get('limit') !== null && query.get('limit') !== '' && Number.isFinite(n) ? n : undefined
         const before = query.get('before') ?? undefined
-        return sendJson(res, 200, store.list({ limit, before }).map(toSummary))
+        sendJson(res, 200, store.list({ limit, before }).map(toSummary))
+        return
       }
       if (rest.startsWith('/api/requests/')) {
         const id = decode(rest.slice('/api/requests/'.length))
         const record = id === null ? undefined : store.get(id)
-        return record ? sendJson(res, 200, record) : notFound(res)
+        record ? sendJson(res, 200, record) : notFound(res)
+        return
       }
     } else if (method === 'DELETE' && rest === '/api/requests') {
       store.clear()

@@ -18,11 +18,20 @@ export function inspector(options: InspectorOptions = {}): RequestHandler {
   const { enabled, maxBodyBytes: max } = insp.options
 
   return (req: Request, res: Response, next: NextFunction): void => {
-    if (!enabled) return next()
+    if (!enabled) {
+      next()
+      return
+    }
     const q = req.originalUrl.indexOf('?')
     const pathname = q < 0 ? req.originalUrl : req.originalUrl.slice(0, q)
-    if (insp.isInspectorPath(pathname)) return insp.handle(req, res)
-    if (insp.shouldIgnore(pathname)) return next()
+    if (insp.isInspectorPath(pathname)) {
+      insp.handle(req, res)
+      return
+    }
+    if (insp.shouldIgnore(pathname)) {
+      next()
+      return
+    }
 
     const startedAt = Date.now()
     const t0 = performance.now()
@@ -47,8 +56,7 @@ export function inspector(options: InspectorOptions = {}): RequestHandler {
         const enc = typeof args[1] === 'string' ? (args[1] as BufferEncoding) : 'utf8'
         if (kept >= max) {
           // Cap reached: only measure, never copy.
-          total +=
-            typeof chunk === 'string' ? Buffer.byteLength(chunk, enc) : (chunk as Uint8Array).byteLength
+          total += typeof chunk === 'string' ? Buffer.byteLength(chunk, enc) : chunk.byteLength
           return
         }
         const room = max - kept
@@ -58,7 +66,7 @@ export function inspector(options: InspectorOptions = {}): RequestHandler {
           total += buf.length
           part = buf.length > room ? Buffer.from(buf.subarray(0, room)) : buf
         } else {
-          const bytes = chunk as Uint8Array
+          const bytes = chunk
           total += bytes.byteLength
           // Copy only the kept slice: the caller may reuse its buffer.
           part = Buffer.from(bytes.subarray(0, Math.min(bytes.byteLength, room)))
@@ -106,12 +114,12 @@ export function inspector(options: InspectorOptions = {}): RequestHandler {
           status: res.statusCode,
           ...(aborted ? { aborted: true as const } : {}),
           request: {
-            headers: normalizeHeaders(req.headers as Record<string, Header>),
+            headers: normalizeHeaders(req.headers),
             query: req.query,
             params: snap!.params,
             body: reqBody.kind === 'binary' && reqBody.size === 0 ? { kind: 'none' } : reqBody,
           },
-          response: { headers: normalizeHeaders(res.getHeaders() as Record<string, Header>), body: resBody },
+          response: { headers: normalizeHeaders(res.getHeaders()), body: resBody },
         }
         insp.record(draft)
       } catch (err) {
@@ -119,8 +127,12 @@ export function inspector(options: InspectorOptions = {}): RequestHandler {
       }
     }
 
-    res.once('finish', () => finalize(false))
-    res.once('close', () => finalize(true))
+    res.once('finish', () => {
+      finalize(false)
+    })
+    res.once('close', () => {
+      finalize(true)
+    })
     next()
   }
 }

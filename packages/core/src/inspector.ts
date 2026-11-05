@@ -1,6 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+
 import { captureParsedBody, classifyContentType } from './body.js'
 import { createHandler } from './http.js'
 import { resolveOptions } from './options.js'
@@ -19,12 +20,12 @@ import type {
 export interface Inspector {
   options: ResolvedOptions
   store: RingStore
-  isInspectorPath(pathname: string): boolean
-  shouldIgnore(pathname: string): boolean
+  isInspectorPath: (pathname: string) => boolean
+  shouldIgnore: (pathname: string) => boolean
   /** Captures an already-parsed request body, redacting it before it is serialized and truncated. */
-  captureRequestBody(value: unknown, contentType: string | undefined): CapturedBody
-  record(draft: RecordDraft): void
-  handle(req: IncomingMessage, res: ServerResponse): void
+  captureRequestBody: (value: unknown, contentType: string | undefined) => CapturedBody
+  record: (draft: RecordDraft) => void
+  handle: (req: IncomingMessage, res: ServerResponse) => void
 }
 
 export function toSummary(r: RequestRecord): RequestSummary {

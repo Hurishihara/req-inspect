@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { RequestRecord } from '@req-inspect/core'
+
 import { fetchRecord } from '../api'
 import { toCurl } from '../curl'
 import { BodyView } from './BodyView'
@@ -56,12 +57,14 @@ export function DetailPane({ id }: { id: string | null }) {
     try {
       await navigator.clipboard.writeText(toCurl(r, location.origin))
       setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
+      setTimeout(() => {
+        setCopied(false)
+      }, 1500)
     } catch {
       /* clipboard unavailable */
     }
   }
-  const hasQuery = r.request.query != null && Object.keys(r.request.query as object).length > 0
+  const hasQuery = r.request.query != null && Object.keys(r.request.query).length > 0
   const hasParams = Object.keys(r.request.params).length > 0
 
   return (
@@ -73,7 +76,9 @@ export function DetailPane({ id }: { id: string | null }) {
             role="tab"
             aria-selected={tab === t}
             className={tab === t ? 'active' : ''}
-            onClick={() => setTab(t)}
+            onClick={() => {
+              setTab(t)
+            }}
           >
             {t[0].toUpperCase() + t.slice(1)}
           </button>

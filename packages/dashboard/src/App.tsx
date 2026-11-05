@@ -1,4 +1,5 @@
 import { useEffect, useReducer, useRef } from 'react'
+
 import { clearAll, fetchList, subscribe } from './api'
 import { idFromHash } from './hash'
 import { initialState, reducer } from './reducer'
@@ -15,8 +16,12 @@ export function App() {
       .then((items) => alive && dispatch({ type: 'loaded', items }))
       .catch(() => {})
     const unsub = subscribe(
-      (item) => dispatch({ type: 'received', item }),
-      (conn) => dispatch({ type: 'conn', state: conn }),
+      (item) => {
+        dispatch({ type: 'received', item })
+      },
+      (conn) => {
+        dispatch({ type: 'conn', state: conn })
+      },
     )
     return () => {
       alive = false
@@ -27,16 +32,22 @@ export function App() {
   useEffect(() => {
     if (prevConn.current === 'reconnecting' && state.conn === 'live') {
       fetchList()
-        .then((items) => dispatch({ type: 'loaded', items }))
+        .then((items) => {
+          dispatch({ type: 'loaded', items })
+        })
         .catch(() => {})
     }
     prevConn.current = state.conn
   }, [state.conn])
 
   useEffect(() => {
-    const onHash = () => dispatch({ type: 'select', id: idFromHash(location.hash) })
+    const onHash = () => {
+      dispatch({ type: 'select', id: idFromHash(location.hash) })
+    }
     window.addEventListener('hashchange', onHash)
-    return () => window.removeEventListener('hashchange', onHash)
+    return () => {
+      window.removeEventListener('hashchange', onHash)
+    }
   }, [])
 
   useEffect(() => {

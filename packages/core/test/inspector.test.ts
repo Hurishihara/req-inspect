@@ -1,4 +1,5 @@
 import { afterEach, expect, spyOn, test } from 'bun:test'
+
 import { createInspector, toSummary } from '../src/inspector.js'
 import { captureRawBody } from '../src/body.js'
 import type { RecordDraft } from '../src/types.js'
