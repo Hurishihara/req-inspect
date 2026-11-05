@@ -195,3 +195,33 @@ test('body hook value is redacted before truncation', async () => {
   })
   expect(JSON.stringify(drafts[0].request.body)).not.toContain('hunter2')
 })
+
+test('capture never throws when its setup fails and leaves the response untouched', async () => {
+  const warn = spyOn(console, 'warn').mockImplementation(() => undefined)
+  const drafts: RecordDraft[] = []
+  const capture = createNodeCapture({ maxBodyBytes: 1024, bodyKeys: [], record: (d) => drafts.push(d) })
+  let threw: unknown
+  let untouched = false
+  const server = createServer((req, res) => {
+    const write: unknown = Reflect.get(res, 'write')
+    const end: unknown = Reflect.get(res, 'end')
+    res.once = () => {
+      throw new Error('once boom')
+    }
+    try {
+      capture(req, res, baseHooks)
+    } catch (err) {
+      threw = err
+    }
+    untouched = Reflect.get(res, 'write') === write && Reflect.get(res, 'end') === end
+    res.end('still ok')
+  })
+  await new Promise<void>((r) => server.listen(0, '127.0.0.1', r))
+  servers.push(server)
+  const port = (server.address() as AddressInfo).port
+  const res = await fetch(`http://127.0.0.1:${String(port)}/`)
+  expect(await res.text()).toBe('still ok')
+  expect(threw).toBeUndefined()
+  expect(untouched).toBe(true)
+  warn.mockRestore()
+})

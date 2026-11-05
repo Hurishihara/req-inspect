@@ -57,19 +57,6 @@ export const createNodeCapture = (deps: NodeCaptureDeps) => {
       }
     }
 
-    // eslint-disable-next-line @typescript-eslint/unbound-method -- called via apply(res, args)
-    const origWrite = res.write as (...a: unknown[]) => boolean
-    // eslint-disable-next-line @typescript-eslint/unbound-method -- called via apply(res, args)
-    const origEnd = res.end as (...a: unknown[]) => ServerResponse
-    res.write = ((...args: unknown[]): boolean => {
-      collect(args)
-      return origWrite.apply(res, args)
-    }) as ServerResponse['write']
-    res.end = ((...args: unknown[]): ServerResponse => {
-      collect(args)
-      return origEnd.apply(res, args)
-    }) as ServerResponse['end']
-
     const finalize = (aborted: boolean): void => {
       if (done) return
       done = true
@@ -112,11 +99,38 @@ export const createNodeCapture = (deps: NodeCaptureDeps) => {
       }
     }
 
-    res.once('finish', () => {
-      finalize(false)
-    })
-    res.once('close', () => {
-      finalize(true)
-    })
+    const install = (): void => {
+      // eslint-disable-next-line @typescript-eslint/unbound-method -- called via apply(res, args)
+      const origWrite = res.write as (...a: unknown[]) => boolean
+      // eslint-disable-next-line @typescript-eslint/unbound-method -- called via apply(res, args)
+      const origEnd = res.end as (...a: unknown[]) => ServerResponse
+      try {
+        res.write = ((...args: unknown[]): boolean => {
+          collect(args)
+          return origWrite.apply(res, args)
+        }) as ServerResponse['write']
+        res.end = ((...args: unknown[]): ServerResponse => {
+          collect(args)
+          return origEnd.apply(res, args)
+        }) as ServerResponse['end']
+        res.once('finish', () => {
+          finalize(false)
+        })
+        res.once('close', () => {
+          finalize(true)
+        })
+      } catch (err) {
+        // Leave the response exactly as the framework had it.
+        res.write = origWrite as ServerResponse['write']
+        res.end = origEnd as ServerResponse['end']
+        throw err
+      }
+    }
+
+    try {
+      install()
+    } catch (err) {
+      warnOnce('capture', err)
+    }
   }
 }

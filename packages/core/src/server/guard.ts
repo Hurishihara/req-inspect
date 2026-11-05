@@ -1,6 +1,6 @@
 import { createHash, timingSafeEqual } from 'node:crypto'
 
-import type { ResolvedOptions } from '../domain/types.js'
+import type { InternalOptions } from '../domain/types.js'
 
 export type AccessResult = { ok: true } | { ok: false; status: 401 | 403 }
 
@@ -47,7 +47,7 @@ const parseBasic = (header: string | undefined): { user: string; pass: string } 
 
 export const checkAccess = (
   req: { remoteAddress: string | undefined; headers: Record<string, HeaderValue> },
-  auth: ResolvedOptions['auth'],
+  auth: InternalOptions['auth'],
 ): AccessResult => {
   if (!auth) {
     const forwarded = req.headers['x-forwarded-for'] !== undefined || req.headers.forwarded !== undefined
