@@ -20,10 +20,25 @@ const boundaryElements = [
   { type: 'dashboard', pattern: 'packages/dashboard/src/**' },
 ]
 
-// Boundary rules are registered but disabled; they are enabled in a later task.
-const boundaryRulesOff = Object.fromEntries(
-  Object.keys(boundaries.rules).map((name) => [`boundaries/${name}`, 'off']),
-)
+const layerPolicies = [
+  ['domain', ['domain', 'support']],
+  ['store', ['domain', 'support']],
+  ['capture', ['domain', 'support']],
+  ['server', ['domain', 'store', 'support', 'server']],
+  ['support', ['support']],
+  ['composition', ['domain', 'store', 'capture', 'server', 'support']],
+  ['entry', ['composition', 'domain']],
+].map(([from, to]) => ({
+  from: { element: { type: from } },
+  allow: { to: { element: { types: to } } },
+}))
+
+const coreSubpathPatterns = [
+  {
+    group: ['@req-inspect/core/*'],
+    message: 'Import only from the @req-inspect/core entry point, never from its subpaths.',
+  },
+]
 
 export default tseslint.config(
   {
@@ -45,6 +60,7 @@ export default tseslint.config(
     plugins: { 'import-x': importX, boundaries },
     settings: {
       'import-x/resolver-next': [createTypeScriptImportResolver()],
+      'import/resolver': { typescript: true },
       'boundaries/elements': boundaryElements,
     },
     rules: {
@@ -60,7 +76,42 @@ export default tseslint.config(
           'newlines-between': 'always',
         },
       ],
-      ...boundaryRulesOff,
+      'boundaries/dependencies': ['error', { default: 'disallow', policies: layerPolicies }],
+    },
+  },
+  {
+    files: ['packages/core/src/**/*.ts'],
+    rules: { 'boundaries/no-unknown-files': 'error' },
+  },
+  {
+    files: ['packages/core/src/domain/**/*.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        { patterns: [{ group: ['node:*'], message: 'The domain layer must stay free of Node built-ins.' }] },
+      ],
+    },
+  },
+  {
+    files: ['packages/express/src/**/*.ts'],
+    rules: { 'no-restricted-imports': ['error', { patterns: coreSubpathPatterns }] },
+  },
+  {
+    files: ['packages/dashboard/src/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: '@req-inspect/core',
+              allowTypeImports: true,
+              message: 'The dashboard may only import types from @req-inspect/core.',
+            },
+          ],
+          patterns: coreSubpathPatterns,
+        },
+      ],
     },
   },
   {
