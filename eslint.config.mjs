@@ -8,6 +8,8 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import globals from 'globals'
 import tseslint from 'typescript-eslint'
 
+// `mode: 'file'` is deliberate: single files only match with it in eslint-plugin-boundaries 7.x,
+// despite the deprecation warning.
 const boundaryElements = [
   { type: 'domain', pattern: 'packages/core/src/domain/**' },
   { type: 'store', pattern: 'packages/core/src/store/**' },
@@ -60,6 +62,7 @@ export default tseslint.config(
     plugins: { 'import-x': importX, boundaries },
     settings: {
       'import-x/resolver-next': [createTypeScriptImportResolver()],
+      // Required by eslint-plugin-boundaries to resolve `.js` imports to `.ts`; import-x uses resolver-next.
       'import/resolver': { typescript: true },
       'boundaries/elements': boundaryElements,
     },
