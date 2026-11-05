@@ -1,5 +1,6 @@
 import { expect, test } from 'bun:test'
 import type { RequestSummary } from '@req-inspect/core'
+
 import { initialState, reducer } from '../src/reducer'
 import { sum } from './helpers'
 

@@ -1,4 +1,5 @@
 import type { CapturedBody } from '@req-inspect/core'
+
 import { formatSize } from '../format'
 import { JsonTree } from './JsonTree'
 

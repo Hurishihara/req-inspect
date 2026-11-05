@@ -1,4 +1,5 @@
 import { expect, test } from 'bun:test'
+
 import { idFromHash } from '../src/hash'
 
 test('idFromHash parses record ids and tolerates garbage', () => {

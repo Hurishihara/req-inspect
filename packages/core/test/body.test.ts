@@ -1,4 +1,5 @@
 import { expect, test } from 'bun:test'
+
 import { captureParsedBody, captureRawBody } from '../src/body.js'
 
 const MAX = 16

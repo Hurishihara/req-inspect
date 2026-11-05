@@ -1,4 +1,5 @@
 import { expect, test } from 'bun:test'
+
 import { resolveOptions } from '../src/options.js'
 
 test('defaults', () => {

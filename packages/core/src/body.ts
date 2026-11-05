@@ -3,7 +3,7 @@ import type { CapturedBody } from './types.js'
 const OCTET = 'application/octet-stream'
 
 function baseType(ct: string | undefined): string {
-  return (ct ?? '').split(';')[0]!.trim().toLowerCase()
+  return (ct ?? '').split(';')[0].trim().toLowerCase()
 }
 
 export function classifyContentType(ct: string | undefined): 'json' | 'text' | 'binary' {

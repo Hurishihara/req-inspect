@@ -1,4 +1,5 @@
 import type { Dispatch } from 'react'
+
 import { matchesFilter } from '../filter'
 import type { Action, State } from '../reducer'
 
@@ -21,9 +22,15 @@ export function RequestList({
           type="search"
           placeholder="Filter: POST /users 5xx"
           value={state.filter}
-          onChange={(e) => dispatch({ type: 'filter', text: e.target.value })}
+          onChange={(e) => {
+            dispatch({ type: 'filter', text: e.target.value })
+          }}
         />
-        <button onClick={() => dispatch({ type: state.paused ? 'resume' : 'pause' })}>
+        <button
+          onClick={() => {
+            dispatch({ type: state.paused ? 'resume' : 'pause' })
+          }}
+        >
           {state.paused ? `Resume (${state.pending.length})` : 'Pause'}
         </button>
         <button onClick={onClear}>Clear</button>
@@ -35,7 +42,9 @@ export function RequestList({
           <button
             key={r.id}
             className={`row s${Math.floor(r.status / 100)}${r.id === state.selectedId ? ' selected' : ''}`}
-            onClick={() => dispatch({ type: 'select', id: r.id })}
+            onClick={() => {
+              dispatch({ type: 'select', id: r.id })
+            }}
           >
             <span className="method">{r.method}</span>
             <span className="path">
