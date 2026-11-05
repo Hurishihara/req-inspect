@@ -42,3 +42,11 @@ export interface ResolvedOptions {
   ignore: (string | RegExp)[]
   redact: { headers: Set<string>; bodyKeys: (string | RegExp)[] } // defaults merged, headers lowercased
 }
+
+/** Framework-specific readers an adapter supplies to `Inspector.capture`. */
+export interface CaptureHooks {
+  route: () => string | null
+  params: () => Record<string, string>
+  query: () => unknown
+  body: () => unknown
+}
