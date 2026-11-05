@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test'
 
-import { resolveOptions } from '../src/options.js'
+import { resolveOptions } from '../../src/domain/options.js'
 
 test('defaults', () => {
   const o = resolveOptions({}, {})

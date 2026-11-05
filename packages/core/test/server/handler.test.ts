@@ -7,13 +7,13 @@ import { join } from 'node:path'
 
 import { afterAll, beforeAll, expect, test } from 'bun:test'
 
-import { createHandler } from '../src/http.js'
-import { createInspector } from '../src/inspector.js'
-import { resolveOptions } from '../src/options.js'
-import { RingStore } from '../src/store.js'
-import type { InspectorOptions, RequestRecord } from '../src/types.js'
+import { createHandler } from '../../src/server/handler.js'
+import { createInspector } from '../../src/inspector.js'
+import { resolveOptions } from '../../src/domain/options.js'
+import { RingStore } from '../../src/store/ring-store.js'
+import type { InspectorOptions, RequestRecord } from '../../src/domain/types.js'
 
-const uiDir = join(import.meta.dir, 'fixtures', 'ui')
+const uiDir = join(import.meta.dir, '..', 'fixtures', 'ui')
 
 const rec = (id: string): RequestRecord => {
   return {

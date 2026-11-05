@@ -7,8 +7,8 @@ import {
   redactBody,
   redactUrl,
   scrubJsonText,
-} from '../src/redact.js'
-import { BODY_KEYS_DEFAULT } from '../src/options.js'
+} from '../../src/domain/redact.js'
+import { BODY_KEYS_DEFAULT } from '../../src/domain/options.js'
 
 test('normalizeHeaders lowercases and joins', () => {
   expect(normalizeHeaders({ 'X-A': ['1', '2'], 'Content-Length': 5, skip: undefined })).toEqual({

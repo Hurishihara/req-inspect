@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test'
 
-import { captureParsedBody, captureRawBody } from '../src/body.js'
+import { captureParsedBody, captureRawBody } from '../../src/domain/body.js'
 
 const MAX = 16
 test('parsed: undefined → none; {} without content-type → none', () => {

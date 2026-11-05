@@ -2,20 +2,14 @@ import type { IncomingMessage, ServerResponse } from 'node:http'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import { captureParsedBody, classifyContentType } from './body.js'
-import { createHandler } from './http.js'
-import { resolveOptions } from './options.js'
-import { redactBody, redactHeaders, redactUrl, scrubJsonText } from './redact.js'
-import { RingStore } from './store.js'
-import { warnOnce } from './warn.js'
-import type {
-  CapturedBody,
-  InspectorOptions,
-  RecordDraft,
-  RequestRecord,
-  RequestSummary,
-  ResolvedOptions,
-} from './types.js'
+import { captureParsedBody } from './domain/body.js'
+import { resolveOptions } from './domain/options.js'
+import { toRecord } from './domain/record.js'
+import { redactBody } from './domain/redact.js'
+import type { CapturedBody, InspectorOptions, RecordDraft, ResolvedOptions } from './domain/types.js'
+import { createHandler } from './server/handler.js'
+import { RingStore } from './store/ring-store.js'
+import { warnOnce } from './support/warn.js'
 
 export interface Inspector {
   options: ResolvedOptions
@@ -28,12 +22,6 @@ export interface Inspector {
   handle: (req: IncomingMessage, res: ServerResponse) => void
 }
 
-export const toSummary = (r: RequestRecord): RequestSummary => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- destructured only to omit these keys from the summary
-  const { request: _request, response: _response, ...summary } = r
-  return summary
-}
-
 export const createInspector = (
   options: InspectorOptions = {},
   internal: { uiDir?: string } = {},
@@ -43,14 +31,6 @@ export const createInspector = (
   const uiDir = internal.uiDir ?? join(dirname(fileURLToPath(import.meta.url)), 'ui')
   const handle = createHandler(store, opts, uiDir)
   const keys = opts.redact.bodyKeys
-
-  const redactCaptured = (b: CapturedBody, contentType: string | undefined): CapturedBody => {
-    if (b.kind !== 'json' && b.kind !== 'text') return b
-    if (typeof b.value !== 'string') return { ...b, value: redactBody(b.value, keys) }
-    // Unparsed JSON text, e.g. a truncated prefix: scrub it by key.
-    if (classifyContentType(contentType) === 'json') return { ...b, value: scrubJsonText(b.value, keys) }
-    return b
-  }
 
   return {
     options: opts,
@@ -63,25 +43,7 @@ export const createInspector = (
     record(draft) {
       setImmediate(() => {
         try {
-          const { request, response } = draft
-          const record: RequestRecord = {
-            ...draft,
-            v: 1,
-            id: store.nextId(),
-            url: redactUrl(draft.url, keys),
-            request: {
-              ...request,
-              headers: redactHeaders(request.headers, opts.redact.headers),
-              query: redactBody(request.query, keys),
-              body: redactCaptured(request.body, request.headers['content-type']),
-            },
-            response: {
-              ...response,
-              headers: redactHeaders(response.headers, opts.redact.headers),
-              body: redactCaptured(response.body, response.headers['content-type']),
-            },
-          }
-          store.add(record)
+          store.add(toRecord(draft, store.nextId(), opts.redact))
         } catch (err) {
           warnOnce('record', err)
         }

@@ -1,4 +1,4 @@
-import type { RequestRecord } from './types.js'
+import type { RequestRecord } from '../domain/types.js'
 
 const DEFAULT_LIST_LIMIT = 100
 const MAX_LIST_LIMIT = 500

@@ -1,8 +1,8 @@
 import { afterEach, expect, spyOn, test, type Mock } from 'bun:test'
 
-import { createInspector, toSummary } from '../src/inspector.js'
-import { captureRawBody } from '../src/body.js'
-import type { RecordDraft } from '../src/types.js'
+import { createInspector } from '../src/inspector.js'
+import { captureRawBody } from '../src/domain/body.js'
+import type { RecordDraft } from '../src/domain/types.js'
 
 const tick = () => new Promise((r) => setImmediate(r))
 const none = { kind: 'none' } as const
@@ -121,19 +121,6 @@ test('record drops draft on RangeError from very deep body', async () => {
   )
   await tick()
   expect(i.store.list()).toHaveLength(0)
-})
-test('toSummary drops request and response', () => {
-  const s = toSummary({ ...draft(), v: 1, id: 'r_000001' })
-  expect(Object.keys(s).sort()).toEqual([
-    'durationMs',
-    'id',
-    'method',
-    'route',
-    'startedAt',
-    'status',
-    'url',
-    'v',
-  ])
 })
 
 test('captureRequestBody redacts before truncating an over-cap body', async () => {

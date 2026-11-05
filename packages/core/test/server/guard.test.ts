@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test'
 
-import { checkAccess } from '../src/guard.js'
+import { checkAccess } from '../../src/server/guard.js'
 
 const basic = (u: string, p: string) => 'Basic ' + Buffer.from(`${u}:${p}`).toString('base64')
 const auth = { user: 'admin', pass: 's3cret' }

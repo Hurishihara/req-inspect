@@ -1,6 +1,6 @@
 import { createHash, timingSafeEqual } from 'node:crypto'
 
-import type { ResolvedOptions } from './types.js'
+import type { ResolvedOptions } from '../domain/types.js'
 
 export type AccessResult = { ok: true } | { ok: false; status: 401 | 403 }
 
