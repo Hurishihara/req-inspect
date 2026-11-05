@@ -15,7 +15,14 @@ const uiDir = join(import.meta.dir, 'fixtures', 'ui')
 
 function rec(id: string): RequestRecord {
   return {
-    v: 1, id, startedAt: 0, durationMs: 1, method: 'GET', url: '/x', route: null, status: 200,
+    v: 1,
+    id,
+    startedAt: 0,
+    durationMs: 1,
+    method: 'GET',
+    url: '/x',
+    route: null,
+    status: 200,
     request: { headers: {}, query: {}, params: {}, body: { kind: 'none' } },
     response: { headers: {}, body: { kind: 'none' } },
   }
@@ -35,7 +42,9 @@ function raw(base: string, path: string): Promise<{ status: number; body: string
   return new Promise((resolve, reject) => {
     const req = rawRequest({ host: u.hostname, port: u.port, path, method: 'GET' }, (res) => {
       let body = ''
-      res.on('data', (c) => { body += c })
+      res.on('data', (c) => {
+        body += c
+      })
       res.on('end', () => resolve({ status: res.statusCode ?? 0, body }))
     })
     req.on('error', reject)
@@ -45,12 +54,20 @@ function raw(base: string, path: string): Promise<{ status: number; body: string
 
 const store = new RingStore(10)
 let base = ''
-beforeAll(async () => { base = await start(store, {}) })
-afterAll(() => { for (const s of servers) { s.closeAllConnections(); s.close() } })
+beforeAll(async () => {
+  base = await start(store, {})
+})
+afterAll(() => {
+  for (const s of servers) {
+    s.closeAllConnections()
+    s.close()
+  }
+})
 
 test('GET /_inspect redirects to trailing slash', async () => {
   const r = await fetch(base + '/_inspect', { redirect: 'manual' })
-  expect(r.status).toBe(302); expect(r.headers.get('location')).toBe('/_inspect/')
+  expect(r.status).toBe(302)
+  expect(r.headers.get('location')).toBe('/_inspect/')
 })
 test('serves index and assets', async () => {
   expect((await fetch(base + '/_inspect/')).headers.get('content-type')).toContain('text/html')
@@ -87,12 +104,15 @@ test('only the mount path prefix is served', async () => {
 })
 test('query string is stripped before routing', async () => {
   expect((await fetch(base + '/_inspect/?x=1')).status).toBe(200)
-  expect((await fetch(base + '/_inspect?x=1', { redirect: 'manual' })).headers.get('location')).toBe('/_inspect/')
+  expect((await fetch(base + '/_inspect?x=1', { redirect: 'manual' })).headers.get('location')).toBe(
+    '/_inspect/',
+  )
 })
 test('list, get, 404, delete', async () => {
   store.add(rec('r_000001'))
-  const list = await (await fetch(base + '/_inspect/api/requests')).json() as any[]
-  expect(list[0].id).toBe('r_000001'); expect(list[0].request).toBeUndefined()
+  const list = (await (await fetch(base + '/_inspect/api/requests')).json()) as any[]
+  expect(list[0].id).toBe('r_000001')
+  expect(list[0].request).toBeUndefined()
   const one = await fetch(base + '/_inspect/api/requests/r_000001')
   expect(one.status).toBe(200)
   expect(((await one.json()) as any).request).toBeDefined()
@@ -119,7 +139,8 @@ test('api has cache-control no-store and json content type', async () => {
 })
 test('method mismatch on known route → 404 json', async () => {
   const r = await fetch(base + '/_inspect/api/requests', { method: 'POST' })
-  expect(r.status).toBe(404); expect(await r.json()).toEqual({ error: 'not found' })
+  expect(r.status).toBe(404)
+  expect(await r.json()).toEqual({ error: 'not found' })
 })
 test('SSE delivers record events and pings', async () => {
   const ac = new AbortController()
@@ -148,7 +169,14 @@ test('SSE unsubscribes on close', async () => {
   let subs = 0
   const s = new RingStore(5)
   const orig = s.subscribe.bind(s)
-  s.subscribe = (fn) => { subs++; const un = orig(fn); return () => { subs--; un() } }
+  s.subscribe = (fn) => {
+    subs++
+    const un = orig(fn)
+    return () => {
+      subs--
+      un()
+    }
+  }
   const b = await start(s, {})
   const ac = new AbortController()
   const r = await fetch(b + '/_inspect/api/stream', { signal: ac.signal })
@@ -166,7 +194,9 @@ test('guard: auth configured → 401 with WWW-Authenticate', async () => {
   expect(r.headers.get('www-authenticate')).toBe('Basic realm="req-inspect"')
   const ok = await fetch(b + '/_inspect/api/requests', { headers: { authorization: 'Basic ' + btoa('u:p') } })
   expect(ok.status).toBe(200)
-  expect((await fetch(b + '/_inspect/', { headers: { authorization: 'Basic ' + btoa('u:bad') } })).status).toBe(401)
+  expect(
+    (await fetch(b + '/_inspect/', { headers: { authorization: 'Basic ' + btoa('u:bad') } })).status,
+  ).toBe(401)
 })
 test('guard: forwarded header without auth → 403', async () => {
   const r = await fetch(base + '/_inspect/api/requests', { headers: { 'x-forwarded-for': '1.2.3.4' } })
@@ -174,7 +204,8 @@ test('guard: forwarded header without auth → 403', async () => {
 })
 test('unknown route → 404 json', async () => {
   const r = await fetch(base + '/_inspect/api/nope')
-  expect(r.status).toBe(404); expect(await r.json()).toEqual({ error: 'not found' })
+  expect(r.status).toBe(404)
+  expect(await r.json()).toEqual({ error: 'not found' })
 })
 test('missing ui dir → 500 explanatory text, api still works', async () => {
   const empty = mkdtempSync(join(tmpdir(), 'req-inspect-empty-'))
@@ -185,7 +216,9 @@ test('missing ui dir → 500 explanatory text, api still works', async () => {
     expect(r.headers.get('content-type')).toContain('text/plain')
     expect(await r.text()).toBe(`req-inspect: dashboard files missing from package (expected at ${empty})`)
     expect((await fetch(b + '/_inspect/api/requests')).status).toBe(200)
-  } finally { rmSync(empty, { recursive: true, force: true }) }
+  } finally {
+    rmSync(empty, { recursive: true, force: true })
+  }
 })
 test('custom mount path', async () => {
   const b = await start(new RingStore(5), { path: '/dbg' })

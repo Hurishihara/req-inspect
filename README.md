@@ -3,6 +3,7 @@
 A drop-in request inspector for Express: mount one middleware and browse every request and response, live, in a local dashboard.
 
 <!-- TODO: record docs/demo.gif -->
+
 ![req-inspect demo](docs/demo.gif)
 
 Until the GIF exists, try it yourself: `bun install && bun run build && node examples/demo/index.mjs`.
@@ -34,15 +35,15 @@ The inspector must be mounted at the app root, with `app.use(inspector())` befor
 
 ## Options
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `path` | `string` | `'/_inspect'` | Mount path of the dashboard and API. Matched against the absolute request path. |
-| `enabled` | `boolean` | `NODE_ENV !== 'production'` or `auth` configured | Force the inspector on or off, overriding the default decision. |
-| `auth` | `{ user: string; pass: string }` | none | Require HTTP basic auth. `user` and `pass` must both be non-empty, otherwise `inspector()` throws. |
-| `maxRequests` | `number` | `500` | Number of records kept in memory; the oldest are evicted. |
-| `maxBodyBytes` | `number` | `65536` | Maximum captured bytes per request or response body; larger bodies are truncated. |
-| `ignore` | `(string \| RegExp)[]` | `[]` | Requests not to capture. A string is a path prefix. Matched against the absolute request path. |
-| `redact` | `{ headers?: string[]; bodyKeys?: (string \| RegExp)[] }` | see Security | Extra header names and body keys to redact, added to the defaults. |
+| Option         | Type                                                      | Default                                          | Description                                                                                        |
+| -------------- | --------------------------------------------------------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
+| `path`         | `string`                                                  | `'/_inspect'`                                    | Mount path of the dashboard and API. Matched against the absolute request path.                    |
+| `enabled`      | `boolean`                                                 | `NODE_ENV !== 'production'` or `auth` configured | Force the inspector on or off, overriding the default decision.                                    |
+| `auth`         | `{ user: string; pass: string }`                          | none                                             | Require HTTP basic auth. `user` and `pass` must both be non-empty, otherwise `inspector()` throws. |
+| `maxRequests`  | `number`                                                  | `500`                                            | Number of records kept in memory; the oldest are evicted.                                          |
+| `maxBodyBytes` | `number`                                                  | `65536`                                          | Maximum captured bytes per request or response body; larger bodies are truncated.                  |
+| `ignore`       | `(string \| RegExp)[]`                                    | `[]`                                             | Requests not to capture. A string is a path prefix. Matched against the absolute request path.     |
+| `redact`       | `{ headers?: string[]; bodyKeys?: (string \| RegExp)[] }` | see Security                                     | Extra header names and body keys to redact, added to the defaults.                                 |
 
 ## Security
 
@@ -68,10 +69,10 @@ The inspector exposes request data, so it is locked down by default.
 
 `examples/bench` runs autocannon against a hello-world JSON route, with and without `inspector()`. Result on Windows, 10 s, 50 connections, single run, no warm-up:
 
-| | req/s | p50 | p99 |
-|---|---|---|---|
-| Plain Express | 12392 | 3 ms | 8 ms |
-| With `inspector()` | 9525 | 4 ms | 10 ms |
+|                    | req/s | p50  | p99   |
+| ------------------ | ----- | ---- | ----- |
+| Plain Express      | 12392 | 3 ms | 8 ms  |
+| With `inspector()` | 9525  | 4 ms | 10 ms |
 
 Throughput loss is 23.1%. That is above the 10% goal for v0.1. It is a single local run, not a rigorous benchmark, so treat it as indicative. Reproduce it with `node examples/bench/bench.mjs`.
 

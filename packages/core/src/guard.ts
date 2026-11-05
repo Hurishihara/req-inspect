@@ -50,7 +50,8 @@ export function checkAccess(
 ): AccessResult {
   if (!auth) {
     const forwarded = req.headers['x-forwarded-for'] !== undefined || req.headers['forwarded'] !== undefined
-    if (forwarded || req.remoteAddress === undefined || !LOOPBACK.has(req.remoteAddress)) return { ok: false, status: 403 }
+    if (forwarded || req.remoteAddress === undefined || !LOOPBACK.has(req.remoteAddress))
+      return { ok: false, status: 403 }
     if (!isLocalHost(firstValue(req.headers['host']))) return { ok: false, status: 403 }
     return { ok: true }
   }

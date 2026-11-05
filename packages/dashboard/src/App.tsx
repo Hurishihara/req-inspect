@@ -5,24 +5,30 @@ import { initialState, reducer } from './reducer'
 import { RequestList } from './components/RequestList'
 import { DetailPane } from './components/DetailPane'
 
-
 export function App() {
   const [state, dispatch] = useReducer(reducer, { ...initialState, selectedId: idFromHash(location.hash) })
   const prevConn = useRef(state.conn)
 
   useEffect(() => {
     let alive = true
-    fetchList().then(items => alive && dispatch({ type: 'loaded', items })).catch(() => {})
+    fetchList()
+      .then((items) => alive && dispatch({ type: 'loaded', items }))
+      .catch(() => {})
     const unsub = subscribe(
-      item => dispatch({ type: 'received', item }),
-      conn => dispatch({ type: 'conn', state: conn }),
+      (item) => dispatch({ type: 'received', item }),
+      (conn) => dispatch({ type: 'conn', state: conn }),
     )
-    return () => { alive = false; unsub() }
+    return () => {
+      alive = false
+      unsub()
+    }
   }, [])
 
   useEffect(() => {
     if (prevConn.current === 'reconnecting' && state.conn === 'live') {
-      fetchList().then(items => dispatch({ type: 'loaded', items })).catch(() => {})
+      fetchList()
+        .then((items) => dispatch({ type: 'loaded', items }))
+        .catch(() => {})
     }
     prevConn.current = state.conn
   }, [state.conn])
@@ -42,7 +48,11 @@ export function App() {
   }, [state.selectedId])
 
   const onClear = async () => {
-    try { await clearAll() } catch { return }
+    try {
+      await clearAll()
+    } catch {
+      return
+    }
     dispatch({ type: 'cleared' })
   }
 

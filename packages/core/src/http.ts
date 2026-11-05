@@ -118,7 +118,10 @@ export function createHandler(
   const root = resolve(uiDir)
 
   const dispatch = (req: IncomingMessage, res: ServerResponse): unknown => {
-    const access = checkAccess({ remoteAddress: req.socket.remoteAddress, headers: req.headers }, options.auth)
+    const access = checkAccess(
+      { remoteAddress: req.socket.remoteAddress, headers: req.headers },
+      options.auth,
+    )
     if (!access.ok) {
       if (access.status === 401) res.setHeader('WWW-Authenticate', 'Basic realm="req-inspect"')
       return sendJson(res, access.status, { error: access.status === 401 ? 'unauthorized' : 'forbidden' })
@@ -138,12 +141,19 @@ export function createHandler(
     const method = req.method ?? 'GET'
 
     if (method === 'GET') {
-      if (rest === '/') { serveIndex(res, root).catch((e) => fail(res, e)); return }
-      if (rest.startsWith('/assets/')) { serveAsset(res, root, rest.slice('/assets/'.length)).catch((e) => fail(res, e)); return }
+      if (rest === '/') {
+        serveIndex(res, root).catch((e) => fail(res, e))
+        return
+      }
+      if (rest.startsWith('/assets/')) {
+        serveAsset(res, root, rest.slice('/assets/'.length)).catch((e) => fail(res, e))
+        return
+      }
       if (rest === '/api/stream') return stream(res, req, store, keepAliveMs)
       if (rest === '/api/requests') {
         const n = Number(query.get('limit'))
-        const limit = query.get('limit') !== null && query.get('limit') !== '' && Number.isFinite(n) ? n : undefined
+        const limit =
+          query.get('limit') !== null && query.get('limit') !== '' && Number.isFinite(n) ? n : undefined
         const before = query.get('before') ?? undefined
         return sendJson(res, 200, store.list({ limit, before }).map(toSummary))
       }

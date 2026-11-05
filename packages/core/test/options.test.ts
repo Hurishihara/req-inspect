@@ -3,8 +3,10 @@ import { resolveOptions } from '../src/options.js'
 
 test('defaults', () => {
   const o = resolveOptions({}, {})
-  expect(o.path).toBe('/_inspect'); expect(o.enabled).toBe(true)
-  expect(o.maxRequests).toBe(500); expect(o.maxBodyBytes).toBe(65536)
+  expect(o.path).toBe('/_inspect')
+  expect(o.enabled).toBe(true)
+  expect(o.maxRequests).toBe(500)
+  expect(o.maxBodyBytes).toBe(65536)
   expect([...o.redact.headers].sort()).toEqual(['authorization', 'cookie', 'set-cookie', 'x-api-key'])
   expect(o.auth).toBeNull()
   expect(o.redact.bodyKeys.some((k) => k instanceof RegExp && k.test('apiKey'))).toBe(true)
@@ -28,7 +30,13 @@ test('user redact lists extend defaults, headers lowercased', () => {
   expect(o.redact.bodyKeys.some((k) => k instanceof RegExp && k.test('password'))).toBe(true)
 })
 test('auth requires non-empty user and pass', () => {
-  const bad = [{ user: '', pass: '' }, { user: 'a', pass: '' }, { user: '', pass: 'b' }, { user: 1, pass: 'b' }, { pass: 'b' }]
+  const bad = [
+    { user: '', pass: '' },
+    { user: 'a', pass: '' },
+    { user: '', pass: 'b' },
+    { user: 1, pass: 'b' },
+    { pass: 'b' },
+  ]
   for (const auth of bad) {
     expect(() => resolveOptions({ auth: auth as any }, {})).toThrow(
       new TypeError('[req-inspect] auth.user and auth.pass must be non-empty strings'),
@@ -37,6 +45,8 @@ test('auth requires non-empty user and pass', () => {
 })
 test('path that normalizes to the root is rejected', () => {
   for (const path of ['/', '', '///']) {
-    expect(() => resolveOptions({ path }, {})).toThrow(new TypeError('[req-inspect] path must not be the root'))
+    expect(() => resolveOptions({ path }, {})).toThrow(
+      new TypeError('[req-inspect] path must not be the root'),
+    )
   }
 })

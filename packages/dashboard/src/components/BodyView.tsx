@@ -13,9 +13,7 @@ export function BodyView({ body }: { body: CapturedBody }) {
       {body.truncated && (
         <div className="banner">{`Truncated: showing first 64 KB of ${formatSize(body.size)}`}</div>
       )}
-      {body.kind === 'json'
-        ? <JsonTree value={body.value} />
-        : <pre>{String(body.value)}</pre>}
+      {body.kind === 'json' ? <JsonTree value={body.value} /> : <pre>{String(body.value)}</pre>}
     </div>
   )
 }

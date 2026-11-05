@@ -47,7 +47,8 @@ export function inspector(options: InspectorOptions = {}): RequestHandler {
         const enc = typeof args[1] === 'string' ? (args[1] as BufferEncoding) : 'utf8'
         if (kept >= max) {
           // Cap reached: only measure, never copy.
-          total += typeof chunk === 'string' ? Buffer.byteLength(chunk, enc) : (chunk as Uint8Array).byteLength
+          total +=
+            typeof chunk === 'string' ? Buffer.byteLength(chunk, enc) : (chunk as Uint8Array).byteLength
           return
         }
         const room = max - kept

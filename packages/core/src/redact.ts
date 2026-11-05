@@ -61,7 +61,8 @@ function decodeJsonKey(raw: string): string {
 export function scrubJsonText(text: string, keys: readonly (string | RegExp)[]): string {
   const matches = keyMatcher(keys)
   return text.replace(JSON_PAIR, (whole, rawKey: string, sep: string) =>
-    matches(decodeJsonKey(rawKey)) ? `"${rawKey}"${sep}"${REDACTED}"` : whole)
+    matches(decodeJsonKey(rawKey)) ? `"${rawKey}"${sep}"${REDACTED}"` : whole,
+  )
 }
 
 function decodeQueryKey(raw: string): string {
@@ -76,13 +77,16 @@ export function redactUrl(url: string, keys: readonly (string | RegExp)[]): stri
   if (q < 0) return url
   const matches = keyMatcher(keys)
   let changed = false
-  const parts = url.slice(q + 1).split('&').map((part) => {
-    const eq = part.indexOf('=')
-    const rawKey = eq < 0 ? part : part.slice(0, eq)
-    if (rawKey === '' || !matches(decodeQueryKey(rawKey))) return part
-    changed = true
-    return `${rawKey}=${REDACTED}`
-  })
+  const parts = url
+    .slice(q + 1)
+    .split('&')
+    .map((part) => {
+      const eq = part.indexOf('=')
+      const rawKey = eq < 0 ? part : part.slice(0, eq)
+      if (rawKey === '' || !matches(decodeQueryKey(rawKey))) return part
+      changed = true
+      return `${rawKey}=${REDACTED}`
+    })
   return changed ? `${url.slice(0, q + 1)}${parts.join('&')}` : url
 }
 

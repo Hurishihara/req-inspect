@@ -27,13 +27,7 @@ const boundaryRulesOff = Object.fromEntries(
 
 export default tseslint.config(
   {
-    ignores: [
-      '**/dist/**',
-      '**/node_modules/**',
-      'packages/core/dist/ui/**',
-      '.superpowers/**',
-      'docs/**',
-    ],
+    ignores: ['**/dist/**', '**/node_modules/**', 'packages/core/dist/ui/**', '.superpowers/**', 'docs/**'],
   },
   js.configs.recommended,
   {

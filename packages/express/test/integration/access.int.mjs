@@ -27,7 +27,9 @@ test('production without auth disables', async () => {
     assert.equal((await fetch(`${s.base}/_inspect/`)).status, 404)
     assert.equal((await fetch(`${s.base}/_inspect/api/requests`)).status, 404)
     assert.equal(await (await fetch(`${s.base}/ping`)).text(), 'pong')
-  } finally { await s.close() }
+  } finally {
+    await s.close()
+  }
 })
 
 test('forwarded header → 403', async () => {
@@ -35,7 +37,9 @@ test('forwarded header → 403', async () => {
   try {
     const r = await fetch(`${s.base}/_inspect/api/requests`, { headers: { 'x-forwarded-for': '1.2.3.4' } })
     assert.equal(r.status, 403)
-  } finally { await s.close() }
+  } finally {
+    await s.close()
+  }
 })
 
 test('auth → 401 without credentials, 200 with', async () => {
@@ -44,21 +48,32 @@ test('auth → 401 without credentials, 200 with', async () => {
     const no = await fetch(`${s.base}/_inspect/api/requests`, { headers: { 'x-forwarded-for': '1.2.3.4' } })
     assert.equal(no.status, 401)
     const ok = await fetch(`${s.base}/_inspect/api/requests`, {
-      headers: { authorization: 'Basic ' + Buffer.from('u:p').toString('base64'), 'x-forwarded-for': '1.2.3.4' },
+      headers: {
+        authorization: 'Basic ' + Buffer.from('u:p').toString('base64'),
+        'x-forwarded-for': '1.2.3.4',
+      },
     })
     assert.equal(ok.status, 200)
-  } finally { await s.close() }
+  } finally {
+    await s.close()
+  }
 })
 
 test('non-localhost Host header → 403 without auth (DNS rebinding)', async () => {
   const s = await appWith({ enabled: true }, 'development')
-  const statusWithHost = (host) => new Promise((resolve, reject) => {
-    const req = httpRequest(`${s.base}/_inspect/api/requests`, { headers: { host } }, (res) => { res.resume(); resolve(res.statusCode) })
-    req.on('error', reject)
-    req.end()
-  })
+  const statusWithHost = (host) =>
+    new Promise((resolve, reject) => {
+      const req = httpRequest(`${s.base}/_inspect/api/requests`, { headers: { host } }, (res) => {
+        res.resume()
+        resolve(res.statusCode)
+      })
+      req.on('error', reject)
+      req.end()
+    })
   try {
     assert.equal(await statusWithHost('evil.example'), 403)
     assert.equal(await statusWithHost('localhost:1234'), 200)
-  } finally { await s.close() }
+  } finally {
+    await s.close()
+  }
 })

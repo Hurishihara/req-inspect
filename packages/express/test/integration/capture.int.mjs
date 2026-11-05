@@ -96,7 +96,9 @@ test('aborted request', async () => {
   req.on('error', () => {})
   req.end()
   setTimeout(() => req.destroy(), 50)
-  const r = await waitFor(async () => (await getRecords(server.base)).find((x) => x.url === '/api/slow' && x.aborted))
+  const r = await waitFor(async () =>
+    (await getRecords(server.base)).find((x) => x.url === '/api/slow' && x.aborted),
+  )
   assert.equal(r.aborted, true)
 })
 
@@ -104,7 +106,10 @@ test('inspector requests are not captured', async () => {
   for (let i = 0; i < 3; i++) await fetch(`${server.base}/_inspect/api/requests`)
   await new Promise((r) => setTimeout(r, 50))
   const all = await getRecords(server.base)
-  assert.equal(all.some((x) => x.url.startsWith('/_inspect')), false)
+  assert.equal(
+    all.some((x) => x.url.startsWith('/_inspect')),
+    false,
+  )
 })
 
 test('ignore list', async () => {
@@ -112,7 +117,10 @@ test('ignore list', async () => {
   await fetch(`${ignoreServer.base}/other`)
   await findRecord(ignoreServer.base, (x) => x.url === '/other')
   const all = await getRecords(ignoreServer.base)
-  assert.equal(all.some((x) => x.url === '/health'), false)
+  assert.equal(
+    all.some((x) => x.url === '/health'),
+    false,
+  )
 })
 
 test('mounted under a prefix: absolute inspector path works and requests are captured', async () => {
@@ -128,7 +136,9 @@ test('mounted under a prefix: absolute inspector path works and requests are cap
     await fetch(`${s.base}/x/hello`)
     const r = await findRecord(s.base, (x) => x.url === '/x/hello')
     assert.equal(r.status, 200)
-  } finally { await s.close() }
+  } finally {
+    await s.close()
+  }
 })
 
 test('over-cap JSON bodies are redacted in both directions', async () => {
@@ -152,7 +162,9 @@ test('over-cap JSON bodies are redacted in both directions', async () => {
     assert.equal(stored.includes('tok_live_abc'), false)
     assert.match(r.request.body.value, /"password":"\[redacted\]"/)
     assert.match(r.response.body.value, /"token":"\[redacted\]"/)
-  } finally { await s.close() }
+  } finally {
+    await s.close()
+  }
 })
 
 test('query string secrets are redacted in url and query', async () => {

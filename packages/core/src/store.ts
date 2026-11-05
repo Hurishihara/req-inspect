@@ -26,7 +26,11 @@ export class RingStore {
     this.head = (this.head + 1) % this.buf.length
     if (this.size < this.buf.length) this.size += 1
     for (const fn of [...this.subs]) {
-      try { fn(record) } catch { this.subs.delete(fn) }
+      try {
+        fn(record)
+      } catch {
+        this.subs.delete(fn)
+      }
     }
   }
 
@@ -60,7 +64,9 @@ export class RingStore {
 
   subscribe(fn: (r: RequestRecord) => void): () => void {
     this.subs.add(fn)
-    return () => { this.subs.delete(fn) }
+    return () => {
+      this.subs.delete(fn)
+    }
   }
 
   /** i-th oldest record (0 = oldest). */
