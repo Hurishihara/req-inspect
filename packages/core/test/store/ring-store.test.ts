@@ -1,7 +1,7 @@
 import { expect, test } from 'bun:test'
 
-import { RingStore } from '../src/store.js'
-import type { RequestRecord } from '../src/types.js'
+import { RingStore } from '../../src/store/ring-store.js'
+import type { RequestRecord } from '../../src/domain/types.js'
 
 const rec = (id: string): RequestRecord => {
   return {
