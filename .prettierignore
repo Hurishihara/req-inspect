@@ -1,0 +1,8 @@
+**/dist/**
+**/node_modules/**
+packages/core/dist/ui/**
+.superpowers/**
+docs/**
+bun.lock
+**/CHANGELOG.md
+.changeset/*.md
