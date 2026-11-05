@@ -38,17 +38,17 @@ EXPRESS_PKG=express5 bun run test:int
 
 `packages/core/src` is split into layers with a fixed import direction. The boundaries are enforced by `bun run lint` (`eslint-plugin-boundaries`).
 
-| Layer                            | Contents                                                                                                     | May import                                  |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------- |
-| `domain/`                        | Pure logic: types, options, body classification, redaction, summaries. No `node:*` imports, no I/O.          | `domain`, `support`                         |
-| `store/`                         | `RingStore`                                                                                                  | `domain`, `support`                         |
-| `capture/`                       | `res.write`/`res.end` wrapping, timing, finish/close to record                                               | `domain`, `support`                         |
-| `server/`                        | Routing under the mount path, access guard, API, SSE, static files, and `respond.ts` (shared JSON responses) | `domain`, `store`, `support`, `server`      |
-| `support/`                       | `warnOnce`                                                                                                   | `support`                                   |
-| `inspector.ts`                   | Composition root wiring store, server and capture                                                            | all layers above                            |
-| `index.ts`                       | Public entry; exports `createInspector` and types only                                                       | `inspector.ts`, `domain`                    |
-| `packages/express` (any adapter) | Framework glue                                                                                               | `@req-inspect/core` entry only, no subpaths |
-| `packages/dashboard`             | UI                                                                                                           | `import type` from `@req-inspect/core` only |
+| Layer                                               | Contents                                                                                                                    | May import                                  |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| `domain/`                                           | Pure logic: types, options, body classification, redaction, summaries. No Node built-in imports (`node:*` or bare), no I/O. | `domain`, `support`                         |
+| `store/`                                            | `RingStore`                                                                                                                 | `domain`, `support`                         |
+| `capture/`                                          | `res.write`/`res.end` wrapping, timing, finish/close to record                                                              | `domain`, `support`                         |
+| `server/`                                           | Routing under the mount path, access guard, API, SSE, static files, and `respond.ts` (shared JSON responses)                | `domain`, `store`, `support`, `server`      |
+| `support/`                                          | `warnOnce`                                                                                                                  | `support`                                   |
+| `inspector.ts`                                      | Composition root wiring store, server and capture                                                                           | all layers above                            |
+| `index.ts`                                          | Public entry; exports `createInspector` and types only                                                                      | `inspector.ts`, `domain/types.ts`           |
+| every other `packages/*` (adapters, e.g. `express`) | Framework glue                                                                                                              | `@req-inspect/core` entry only, no subpaths |
+| `packages/dashboard`                                | UI                                                                                                                          | `import type` from `@req-inspect/core` only |
 
 Core tests import internals from `src/` directly; everything else goes through the public entry.
 
