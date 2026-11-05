@@ -226,3 +226,14 @@ test('url without secret query keys is stored unchanged', async () => {
   await tick()
   expect(i.store.list().map((r) => r.url)).toEqual(['/plain', '/a?b=1&c&d=%ZZ'])
 })
+
+test('dispatch', () => {
+  const i = createInspector({ ignore: ['/health', '/_inspect'] })
+  expect(i.dispatch('/_inspect')).toBe('handle')
+  expect(i.dispatch('/_inspect/api/requests')).toBe('handle')
+  expect(i.dispatch('/health/live')).toBe('skip')
+  expect(i.dispatch('/_inspectx')).toBe('skip') // string ignore is a prefix match
+  expect(createInspector({}).dispatch('/_inspectx')).toBe('capture')
+  expect(i.dispatch('/users')).toBe('capture')
+  expect(createInspector({ enabled: false }).dispatch('/_inspect')).toBe('skip')
+})
