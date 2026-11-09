@@ -1,5 +1,12 @@
 # @req-inspect/express
 
+## 0.2.1
+
+### Patch Changes
+
+- Updated dependencies [f9564cd]
+  - @req-inspect/core@0.3.0
+
 ## 0.2.0
 
 ### Minor Changes
