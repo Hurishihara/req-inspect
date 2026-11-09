@@ -1,4 +1,4 @@
-# @req-inspect/express
+<h1><img src="https://raw.githubusercontent.com/Hurishihara/req-inspect/main/brand/logo/png/lockup-horizontal-color-1200.png" alt="@req-inspect/express" width="280"></h1>
 
 Express middleware for [req-inspect](https://github.com/Hurishihara/req-inspect): a live request inspector dashboard.
 

@@ -1,4 +1,9 @@
-# req-inspect
+<h1>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="brand/logo/svg/lockup-horizontal-color-on-dark.svg">
+    <img src="brand/logo/svg/lockup-horizontal-color.svg" alt="req-inspect" width="280">
+  </picture>
+</h1>
 
 A drop-in request inspector for Express: mount one middleware and browse every request and response, live, in a local dashboard.
 
