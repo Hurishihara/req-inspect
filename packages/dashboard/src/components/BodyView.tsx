@@ -1,20 +1,32 @@
 import type { CapturedBody } from '@req-inspect/core'
 
 import { formatSize } from '../format'
+import { Banner } from '../ui/Banner'
+import { CodeBlock } from '../ui/CodeBlock'
 import { JsonTree } from './JsonTree'
 
 export const BodyView = ({ body }: { body: CapturedBody }) => {
-  if (body.kind === 'none') return <p className="muted">No body</p>
+  if (body.kind === 'none') return <p className="text-ink-muted">No body</p>
   if (body.kind === 'binary') {
     const enc = body.encoding ? ` · ${body.encoding}` : ''
-    return <p className="muted">{`Binary · ${body.contentType} · ${formatSize(body.size)}${enc}`}</p>
+    return (
+      <Banner variant="neutral" title="Binary body.">
+        {`${body.contentType} · ${formatSize(body.size)}${enc}`}
+      </Banner>
+    )
   }
   return (
-    <div>
+    <div className="flex flex-col gap-2">
       {body.truncated && (
-        <div className="banner">{`Truncated: showing first 64 KB of ${formatSize(body.size)}`}</div>
+        <Banner variant="info" title="Truncated.">
+          {`Showing the first 64 KB of ${formatSize(body.size)}.`}
+        </Banner>
       )}
-      {body.kind === 'json' ? <JsonTree value={body.value} /> : <pre>{String(body.value)}</pre>}
+      {body.kind === 'json' ? (
+        <JsonTree value={body.value} />
+      ) : (
+        <CodeBlock meta={`text · ${formatSize(body.size)}`} text={String(body.value)} />
+      )}
     </div>
   )
 }
