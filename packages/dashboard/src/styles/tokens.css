@@ -1,0 +1,60 @@
+:root {
+  --bg: #ffffff;
+  --surface: #f6f7f9;
+  --surface-raised: #ffffff;
+  --hover: #eef0f3;
+  --selected: #eceeff;
+  --border: #dde1e6;
+  --border-strong: #858d99;
+  --ink: #1b1f24;
+  --ink-muted: #5b6370;
+  --accent: #4338ca;
+  --accent-ink: #ffffff;
+  --focus: var(--accent);
+  --status-2xx: #137a3a;
+  --status-2xx-bg: #dcfce7;
+  --status-3xx: #0e7490;
+  --status-3xx-bg: #cffafe;
+  --status-4xx: #9a5b00;
+  --status-4xx-bg: #fef3c7;
+  --status-5xx: #b91c1c;
+  --status-5xx-bg: #fee2e2;
+  --info: #0969da;
+  --info-bg: #ddf4ff;
+  --signal-live: var(--status-2xx);
+  --signal-warn: var(--status-4xx);
+  --syntax-key: var(--accent);
+  --syntax-string: #0b6e4f;
+  --syntax-number: #9a3412;
+  --syntax-null: var(--ink-muted);
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, 'Cascadia Code', Menlo, Consolas, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0e1116;
+    --surface: #161a21;
+    --surface-raised: #1c212a;
+    --hover: #1f242d;
+    --selected: #232849;
+    --border: #2a3039;
+    --border-strong: #5d6674;
+    --ink: #e6e9ef;
+    --ink-muted: #9aa3b0;
+    --accent: #a5b4fc;
+    --accent-ink: #11143a;
+    --status-2xx: #4ade80;
+    --status-2xx-bg: #10291a;
+    --status-3xx: #22d3ee;
+    --status-3xx-bg: #0b2730;
+    --status-4xx: #fbbf24;
+    --status-4xx-bg: #2e2106;
+    --status-5xx: #f87171;
+    --status-5xx-bg: #321313;
+    --info: #58a6ff;
+    --info-bg: #0c2d6b;
+    --syntax-string: #7ee2b8;
+    --syntax-number: #fdba74;
+  }
+}

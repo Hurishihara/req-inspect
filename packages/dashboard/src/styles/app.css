@@ -1,0 +1,84 @@
+@import 'tailwindcss';
+@import './tokens.css';
+
+@theme inline {
+  --color-*: initial;
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-hover: var(--hover);
+  --color-selected: var(--selected);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-focus: var(--focus);
+  --color-status-2xx: var(--status-2xx);
+  --color-status-2xx-bg: var(--status-2xx-bg);
+  --color-status-3xx: var(--status-3xx);
+  --color-status-3xx-bg: var(--status-3xx-bg);
+  --color-status-4xx: var(--status-4xx);
+  --color-status-4xx-bg: var(--status-4xx-bg);
+  --color-status-5xx: var(--status-5xx);
+  --color-status-5xx-bg: var(--status-5xx-bg);
+  --color-info: var(--info);
+  --color-info-bg: var(--info-bg);
+  --color-signal-live: var(--signal-live);
+  --color-signal-warn: var(--signal-warn);
+  --color-syntax-key: var(--syntax-key);
+  --color-syntax-string: var(--syntax-string);
+  --color-syntax-number: var(--syntax-number);
+  --color-syntax-null: var(--syntax-null);
+
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, 'Cascadia Code', Menlo, Consolas, monospace;
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+
+  --spacing-control: 28px;
+  --spacing-row: 36px;
+  --spacing-toolbar: 44px;
+
+  --text-title: 16px;
+  --text-title--line-height: 22px;
+  --text-title--font-weight: 600;
+  --text-body: 13px;
+  --text-body--line-height: 20px;
+  --text-caption: 12px;
+  --text-caption--line-height: 16px;
+  --text-label: 11px;
+  --text-label--line-height: 16px;
+  --text-label--font-weight: 600;
+  --text-label--letter-spacing: 0.06em;
+  --text-code: 12px;
+  --text-code--line-height: 18px;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-bg font-sans text-body text-ink antialiased;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      transition: none !important;
+      animation: none !important;
+    }
+  }
+}
