@@ -33,36 +33,38 @@ export const Tabs = ({
   }
 
   return (
-    <div role="tablist" className="flex h-toolbar items-center gap-1 border-b border-border bg-surface px-2">
+    <div className="flex h-toolbar items-center gap-1 border-b border-border bg-surface px-2">
       {leading}
-      {tabs.map((t, i) => {
-        const selected = t.id === value
-        return (
-          <button
-            key={t.id}
-            ref={(el) => {
-              refs.current[i] = el
-            }}
-            type="button"
-            role="tab"
-            id={`${idPrefix}-tab-${t.id}`}
-            aria-controls={`${idPrefix}-panel-${t.id}`}
-            aria-selected={selected}
-            tabIndex={selected ? 0 : -1}
-            onClick={() => {
-              onChange(t.id)
-            }}
-            onKeyDown={onKeyDown}
-            className={`h-full border-b-2 px-3 transition-colors duration-[120ms] ${
-              selected
-                ? 'border-accent font-semibold text-ink'
-                : 'border-transparent text-ink-muted hover:text-ink'
-            }`}
-          >
-            {t.label}
-          </button>
-        )
-      })}
+      <div role="tablist" className="flex h-full gap-1">
+        {tabs.map((t, i) => {
+          const selected = t.id === value
+          return (
+            <button
+              key={t.id}
+              ref={(el) => {
+                refs.current[i] = el
+              }}
+              type="button"
+              role="tab"
+              id={`${idPrefix}-tab-${t.id}`}
+              aria-controls={`${idPrefix}-panel-${t.id}`}
+              aria-selected={selected}
+              tabIndex={selected || (current < 0 && i === 0) ? 0 : -1}
+              onClick={() => {
+                onChange(t.id)
+              }}
+              onKeyDown={onKeyDown}
+              className={`h-full border-b-2 px-3 transition-colors duration-[120ms] ${
+                selected
+                  ? 'border-accent font-semibold text-ink'
+                  : 'border-transparent text-ink-muted hover:text-ink'
+              }`}
+            >
+              {t.label}
+            </button>
+          )
+        })}
+      </div>
     </div>
   )
 }

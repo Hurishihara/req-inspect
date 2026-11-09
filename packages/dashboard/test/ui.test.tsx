@@ -33,6 +33,27 @@ describe('Tabs', () => {
   })
 })
 
+describe('Tabs fixes', () => {
+  const tabs = [
+    { id: 'a', label: 'A' },
+    { id: 'b', label: 'B' },
+  ]
+  test('leading is outside the tablist', () => {
+    const h = renderToStaticMarkup(
+      <Tabs tabs={tabs} value="a" onChange={noop} idPrefix="d" leading={<button>Back</button>} />,
+    )
+    expect(h).toContain('Back')
+    const inner = /<div[^>]*role="tablist"[^>]*>([\s\S]*)<\/div><\/div>$/.exec(h)?.[1] ?? ''
+    expect(inner).toContain('role="tab"')
+    expect(inner).not.toContain('Back')
+  })
+  test('unknown value makes first tab focusable', () => {
+    const h = renderToStaticMarkup(<Tabs tabs={tabs} value="zzz" onChange={noop} idPrefix="d" />)
+    expect(h.match(/tabindex="0"/g)).toHaveLength(1)
+    expect(h.indexOf('tabindex="0"')).toBeLessThan(h.indexOf('tabindex="-1"'))
+  })
+})
+
 describe('SearchField', () => {
   const render = (value: string) =>
     renderToStaticMarkup(<SearchField value={value} onChange={noop} onClear={noop} inputRef={createRef()} />)
@@ -53,6 +74,18 @@ describe('KeyValueList', () => {
     expect(h).toContain('<dl')
     expect(h).toContain('italic')
     expect(h).toContain('text-syntax-null')
+  })
+  test('repeated keys render all values', () => {
+    const h = renderToStaticMarkup(
+      <KeyValueList
+        entries={[
+          ['set-cookie', 'a'],
+          ['set-cookie', 'b'],
+        ]}
+      />,
+    )
+    expect(h).toContain('>a</dd>')
+    expect(h).toContain('>b</dd>')
   })
   test('empty', () => {
     expect(renderToStaticMarkup(<KeyValueList entries={[]} />)).toContain('No headers')
