@@ -3,6 +3,9 @@ import { createRef } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import type { RequestSummary } from '@req-inspect/core'
 
+import { BodyView } from '../src/components/BodyView'
+import { DetailPane } from '../src/components/DetailPane'
+import { JsonTree } from '../src/components/JsonTree'
 import { RequestList } from '../src/components/RequestList'
 import { RequestRow } from '../src/components/RequestRow'
 import { initialState } from '../src/reducer'
@@ -222,5 +225,38 @@ describe('RequestRow and RequestList', () => {
     const some = list([sum('r1')], '')
     expect(some).toContain('role="listbox"')
     expect(some).toContain('aria-label="Requests"')
+  })
+})
+
+describe('BodyView, JsonTree, DetailPane', () => {
+  test('truncated text body', () => {
+    const h = renderToStaticMarkup(
+      <BodyView body={{ kind: 'text', value: 'hi', size: 2_000_000, truncated: true }} />,
+    )
+    expect(h).toContain('bg-info-bg')
+    expect(h).toContain('Truncated.')
+    expect(h).toContain('Showing the first 64 KB of 1.9 MB.')
+    expect(h).toContain('text · 1.9 MB')
+  })
+  test('binary body', () => {
+    const h = renderToStaticMarkup(<BodyView body={{ kind: 'binary', contentType: 'image/png', size: 70 }} />)
+    expect(h).toContain('Binary body.')
+    expect(h).toContain('image/png · 70 B')
+  })
+  test('no body', () => {
+    expect(renderToStaticMarkup(<BodyView body={{ kind: 'none' }} />)).toContain('No body')
+  })
+  test('json tree', () => {
+    const h = renderToStaticMarkup(<JsonTree value={{ a: 'x', n: 1, z: null, s: '[redacted]' }} />)
+    for (const c of ['text-syntax-key', 'text-syntax-string', 'text-syntax-number', 'italic']) {
+      expect(h).toContain(c)
+    }
+    expect(h).toContain('aria-expanded="true"')
+    expect(h).toContain('aria-label="Collapse"')
+  })
+  test('detail pane without selection', () => {
+    const h = renderToStaticMarkup(<DetailPane id={null} />)
+    expect(h).toContain('Select a request')
+    expect(h).toContain('Pick a row to see its headers and body.')
   })
 })

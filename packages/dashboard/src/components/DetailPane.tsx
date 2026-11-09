@@ -1,39 +1,45 @@
-import { useEffect, useState } from 'react'
+import { type ReactNode, useEffect, useRef, useState } from 'react'
 import type { RequestRecord } from '@req-inspect/core'
 
 import { fetchRecord } from '../api'
 import { toCurl } from '../curl'
+import { formatDuration } from '../format'
+import { Banner } from '../ui/Banner'
+import { Button } from '../ui/Button'
+import { EmptyState } from '../ui/EmptyState'
+import { KeyValueList } from '../ui/KeyValueList'
+import { SectionLabel } from '../ui/SectionLabel'
+import { StatusBadge } from '../ui/StatusBadge'
+import { Tabs } from '../ui/Tabs'
 import { BodyView } from './BodyView'
 import { JsonTree } from './JsonTree'
 
 type Tab = 'overview' | 'request' | 'response'
 type Loaded = { id: string; record: RequestRecord | null } | 'error'
 
-const Headers = ({ headers }: { headers: Record<string, string> }) => {
-  const entries = Object.entries(headers)
-  if (!entries.length) return <p className="muted">No headers</p>
-  return (
-    <dl className="kv">
-      {entries.map(([k, v]) => (
-        <div key={k}>
-          <dt>{k}</dt>
-          <dd className={v === '[redacted]' ? 'redacted' : undefined}>{v}</dd>
-        </div>
-      ))}
-    </dl>
-  )
-}
+const TABS: { id: Tab; label: string }[] = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'request', label: 'Request' },
+  { id: 'response', label: 'Response' },
+]
 
-const Message = ({ text }: { text: string }) => (
-  <section className="detail">
-    <div className="empty">{text}</div>
+const Shell = ({ onBack, busy, children }: { onBack?: () => void; busy?: boolean; children: ReactNode }) => (
+  <section className="detail min-w-0 flex-1 overflow-auto" aria-busy={busy}>
+    {onBack && (
+      <div className="flex h-toolbar items-center border-b border-border bg-surface px-2">
+        <Button variant="ghost" icon="back" aria-label="Back to requests" onClick={onBack} />
+      </div>
+    )}
+    {children}
   </section>
 )
 
-export const DetailPane = ({ id }: { id: string | null }) => {
+export const DetailPane = ({ id, onBack }: { id: string | null; onBack?: () => void }) => {
   const [tab, setTab] = useState<Tab>('overview')
   const [loaded, setLoaded] = useState<Loaded | null>(null)
   const [copied, setCopied] = useState(false)
+  const [retry, setRetry] = useState(0)
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- drop the previous record immediately when the selection changes so stale data is never shown
@@ -50,103 +56,145 @@ export const DetailPane = ({ id }: { id: string | null }) => {
     return () => {
       alive = false
     }
-  }, [id])
+  }, [id, retry])
 
-  if (!id) return <Message text="Select a request" />
-  if (loaded === 'error') return <Message text="Failed to load request." />
-  if (loaded?.id !== id) return <Message text="Loading…" />
+  useEffect(
+    () => () => {
+      clearTimeout(timer.current)
+    },
+    [],
+  )
+
+  const back = onBack ? { onBack } : {}
+  if (!id) {
+    return (
+      <Shell {...back}>
+        <EmptyState title="Select a request" hint="Pick a row to see its headers and body." />
+      </Shell>
+    )
+  }
+  if (loaded === 'error') {
+    return (
+      <Shell {...back}>
+        <div className="p-4">
+          <Banner
+            variant="error"
+            title="Couldn't load this request."
+            action={
+              <Button
+                onClick={() => {
+                  setLoaded(null)
+                  setRetry((n) => n + 1)
+                }}
+              >
+                Retry
+              </Button>
+            }
+          />
+        </div>
+      </Shell>
+    )
+  }
+  if (loaded?.id !== id) {
+    return (
+      <Shell {...back} busy>
+        <p className="p-4 text-caption text-ink-muted">Loading…</p>
+      </Shell>
+    )
+  }
   const r = loaded.record
-  if (!r) return <Message text="This request is no longer in memory." />
+  if (!r) {
+    return (
+      <Shell {...back}>
+        <EmptyState
+          title="Request no longer in memory"
+          hint="Older requests are dropped once the list reaches maxRequests."
+        />
+      </Shell>
+    )
+  }
 
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(toCurl(r, location.origin))
       setCopied(true)
-      setTimeout(() => {
+      clearTimeout(timer.current)
+      timer.current = setTimeout(() => {
         setCopied(false)
       }, 1500)
     } catch {
       /* clipboard unavailable */
     }
   }
-  const hasQuery = r.request.query != null && Object.keys(r.request.query).length > 0
+  const query = r.request.query
+  const hasQuery = query != null && Object.keys(query).length > 0
   const hasParams = Object.keys(r.request.params).length > 0
+  const headers = (h: Record<string, string>) => <KeyValueList entries={Object.entries(h)} />
 
   return (
-    <section className="detail">
-      <div className="tabs" role="tablist">
-        {(['overview', 'request', 'response'] as const).map((t) => (
-          <button
-            key={t}
-            role="tab"
-            aria-selected={tab === t}
-            className={tab === t ? 'active' : ''}
-            onClick={() => {
-              setTab(t)
-            }}
-          >
-            {t[0].toUpperCase() + t.slice(1)}
-          </button>
-        ))}
-      </div>
-      <div className="tabbody">
+    <section className="detail min-w-0 flex-1 overflow-auto">
+      <Tabs
+        tabs={TABS}
+        value={tab}
+        onChange={(t) => {
+          setTab(t as Tab)
+        }}
+        idPrefix="detail"
+        leading={
+          onBack && <Button variant="ghost" icon="back" aria-label="Back to requests" onClick={onBack} />
+        }
+      />
+      <div role="tabpanel" id={`detail-panel-${tab}`} aria-labelledby={`detail-tab-${tab}`} className="p-4">
         {tab === 'overview' && (
-          <dl className="kv">
-            <div>
-              <dt>Method</dt>
-              <dd>{r.method}</dd>
-            </div>
-            <div>
-              <dt>URL</dt>
-              <dd>{r.url}</dd>
-            </div>
-            <div>
-              <dt>Route</dt>
-              <dd>{r.route ?? '—'}</dd>
-            </div>
-            <div>
-              <dt>Status</dt>
-              <dd>{r.status}</dd>
-            </div>
-            <div>
-              <dt>Duration</dt>
-              <dd>{Math.round(r.durationMs)} ms</dd>
-            </div>
-            <div>
-              <dt>Time</dt>
-              <dd>{new Date(r.startedAt).toISOString()}</dd>
-            </div>
-            <div>
-              <dt>Aborted</dt>
-              <dd>{r.aborted ? 'yes' : 'no'}</dd>
-            </div>
-          </dl>
+          <KeyValueList
+            entries={[
+              ['Method', r.method],
+              ['URL', r.url],
+              ['Route', r.route ?? '—'],
+              ['Status', <StatusBadge key="status" status={r.status} aborted={r.aborted === true} />],
+              ['Duration', formatDuration(r.durationMs)],
+              [
+                'Time',
+                <time
+                  key="time"
+                  dateTime={new Date(r.startedAt).toISOString()}
+                  title={new Date(r.startedAt).toISOString()}
+                >
+                  {new Date(r.startedAt).toLocaleString()}
+                </time>,
+              ],
+              ['Aborted', r.aborted ? 'yes' : 'no'],
+            ]}
+          />
         )}
         {tab === 'request' && (
           <>
-            <button
-              className="copy"
+            <Button
+              variant="primary"
+              icon="copy"
               onClick={() => {
                 void copy()
               }}
             >
               {copied ? 'Copied' : 'Copy as cURL'}
-            </button>
-            <h3>Headers</h3>
-            <Headers headers={r.request.headers} />
-            <h3>Query</h3>
-            {hasQuery ? <JsonTree value={r.request.query} /> : <p className="muted">None</p>}
-            <h3>Params</h3>
-            {hasParams ? <JsonTree value={r.request.params} /> : <p className="muted">None</p>}
-            <h3>Body</h3>
-            <BodyView body={r.request.body} />
+            </Button>
+            <div className="mt-4">
+              <SectionLabel>Headers</SectionLabel>
+              {headers(r.request.headers)}
+              <SectionLabel>Query</SectionLabel>
+              {hasQuery ? <JsonTree value={query} /> : <p className="text-ink-muted">None</p>}
+              <SectionLabel>Params</SectionLabel>
+              {hasParams ? <JsonTree value={r.request.params} /> : <p className="text-ink-muted">None</p>}
+              <SectionLabel>Body</SectionLabel>
+              <BodyView body={r.request.body} />
+            </div>
           </>
         )}
         {tab === 'response' && (
           <>
-            <h3>Headers</h3>
-            <Headers headers={r.response.headers} />
-            <h3>Body</h3>
+            <SectionLabel>Headers</SectionLabel>
+            {headers(r.response.headers)}
+            <SectionLabel>Body</SectionLabel>
             <BodyView body={r.response.body} />
           </>
         )}

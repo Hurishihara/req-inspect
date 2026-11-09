@@ -2,15 +2,21 @@ import { useState } from 'react'
 
 const REDACTED = '[redacted]'
 
+const literalClass = (value: unknown): string => {
+  if (value === REDACTED) return 'text-syntax-null italic'
+  if (typeof value === 'string') return 'text-syntax-string'
+  if (value === null) return 'text-syntax-null'
+  return 'text-syntax-number'
+}
+
 const Node = ({ name, value, depth }: { name?: string; value: unknown; depth: number }) => {
   const [open, setOpen] = useState(depth < 2)
-  const label = name !== undefined && <span className="key">{name}: </span>
+  const label = name !== undefined && <span className="text-syntax-key">{name}: </span>
   if (value === null || typeof value !== 'object') {
-    const cls = value === REDACTED ? 'redacted' : typeof value === 'string' ? 'str' : 'lit'
     return (
-      <div className="jt-line">
+      <div className="font-mono text-code">
         {label}
-        <span className={cls}>{JSON.stringify(value)}</span>
+        <span className={literalClass(value)}>{JSON.stringify(value)}</span>
       </div>
     )
   }
@@ -19,39 +25,43 @@ const Node = ({ name, value, depth }: { name?: string; value: unknown; depth: nu
   const [lo, hi] = isArr ? ['[', ']'] : ['{', '}']
   if (entries.length === 0)
     return (
-      <div className="jt-line">
+      <div className="font-mono text-code">
         {label}
-        {lo}
-        {hi}
+        <span className="text-syntax-null">
+          {lo}
+          {hi}
+        </span>
       </div>
     )
   return (
     <div>
-      <div className="jt-line">
+      <div className="font-mono text-code">
         <button
-          className="toggle"
+          type="button"
+          className="inline-block h-5 w-4 text-ink-muted"
           onClick={() => {
             setOpen(!open)
           }}
-          aria-label={open ? 'collapse' : 'expand'}
+          aria-expanded={open}
+          aria-label={open ? 'Collapse' : 'Expand'}
         >
           {open ? '▾' : '▸'}
         </button>
         {label}
-        {lo}
+        <span className="text-syntax-null">{lo}</span>
         {!open && (
-          <span className="muted">
-            {' '}
-            {entries.length} {isArr ? 'items' : 'keys'} {hi}
-          </span>
+          <>
+            <span className="text-ink-muted italic">{` ${String(entries.length)} ${isArr ? 'items' : 'keys'} `}</span>
+            <span className="text-syntax-null">{hi}</span>
+          </>
         )}
       </div>
       {open && (
-        <div className="jt-children">
+        <div className="pl-4">
           {entries.map(([k, v]) => (
             <Node key={k} name={k} value={v} depth={depth + 1} />
           ))}
-          <div className="jt-line">{hi}</div>
+          <div className="font-mono text-code text-syntax-null">{hi}</div>
         </div>
       )}
     </div>
@@ -60,7 +70,7 @@ const Node = ({ name, value, depth }: { name?: string; value: unknown; depth: nu
 
 export const JsonTree = ({ value }: { value: unknown }) => {
   return (
-    <div className="jsontree">
+    <div className="overflow-auto">
       <Node value={value} depth={0} />
     </div>
   )
