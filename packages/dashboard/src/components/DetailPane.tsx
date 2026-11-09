@@ -84,7 +84,7 @@ export const DetailPane = ({
   if (!id) {
     return (
       <Shell {...back}>
-        <EmptyState title="Select a request" hint="Pick a row to see its headers and body." />
+        <EmptyState title="Select a request" hint="Use ↑↓ to move through the list." />
       </Shell>
     )
   }
@@ -122,7 +122,7 @@ export const DetailPane = ({
     return (
       <Shell {...back}>
         <EmptyState
-          title="Request no longer in memory"
+          title="This request is no longer in memory"
           hint="Older requests are dropped once the list reaches maxRequests."
         />
       </Shell>
