@@ -18,6 +18,7 @@ import { LiveIndicator } from '../src/ui/LiveIndicator'
 import { SearchField } from '../src/ui/SearchField'
 import { StatusBadge } from '../src/ui/StatusBadge'
 import { Tabs } from '../src/ui/Tabs'
+import { ThemeToggle } from '../src/ui/ThemeToggle'
 import { full, sum } from './helpers'
 
 const noop = () => undefined
@@ -277,5 +278,18 @@ describe('BodyView, JsonTree, DetailPane', () => {
     const h = renderToStaticMarkup(<DetailPane id={null} />)
     expect(h).toContain('Select a request')
     expect(h).toContain('Use ↑↓ to move through the list.')
+  })
+})
+
+describe('ThemeToggle', () => {
+  test('labels the current theme and sits in the list toolbar', () => {
+    const h = renderToStaticMarkup(<ThemeToggle />)
+    expect(h).toContain('aria-label="Theme: System"')
+    expect(h).toContain('title="Theme: System"')
+    const ref = createRef<HTMLInputElement>()
+    const list = renderToStaticMarkup(
+      <RequestList state={initialState} dispatch={noop} onClear={noop} filterRef={ref} />,
+    )
+    expect(list).toContain('aria-label="Theme: System"')
   })
 })
