@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>req-inspect · logo</title>
+<style>
+  :root { --ink:#1b1f24; --muted:#5b6370; --bg:#ffffff; --surface:#f6f7f9; --border:#dde1e6; --indigo:#4338ca; --dark:#0e1116; --dark2:#161a21; --ink-d:#e6e9ef; --indigo-d:#a5b4fc; --green:#15803d; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #e9ebef; font: 14px/20px system-ui, "Segoe UI", sans-serif; color: var(--ink); }
+  .slide { width: 1280px; height: 720px; margin: 0 auto 24px; background: var(--bg); position: relative; overflow: hidden; }
+  .label { position: absolute; left: 48px; top: 40px; font: 600 11px/16px system-ui; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .dark { background: var(--dark); } .dark .label { color: #9aa3b0; }
+  .center { display: flex; align-items: center; justify-content: center; height: 100%; }
+  h2 { margin: 0 0 8px; font-size: 22px; } p { margin: 0; color: var(--muted); }
+  /* slide 3: construction */
+  .grid { display: grid; grid-template-columns: 420px 1fr; gap: 56px; padding: 96px 48px 48px; height: 100%; }
+  .constr { position: relative; width: 420px; height: 420px; background-image: linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px); background-size: 26.25px 26.25px; border: 1px solid var(--border); }
+  .constr img { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .facts { display: grid; gap: 18px; align-content: start; }
+  .facts b { display: block; font-size: 15px; } .facts span { color: var(--muted); }
+  .sizes { display: flex; align-items: flex-end; gap: 28px; margin-top: 8px; }
+  .sizes div { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); }
+  /* slide 4: colour */
+  .swatches { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 16px; padding: 96px 48px 0; }
+  .sw { height: 300px; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; justify-content: flex-end; font: 13px/18px ui-monospace, Consolas, monospace; }
+  .variants { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; padding: 16px 48px; }
+  .variants div { height: 200px; border-radius: 8px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); }
+  .variants img { height: 120px; }
+  /* slide 5: in context */
+  .ctx { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; align-content: start; gap: 20px; padding: 88px 48px 48px; height: 100%; }
+  .win { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: #fff; }
+  .tabbar { display: flex; align-items: flex-end; gap: 4px; height: 40px; padding: 0 10px; background: #dfe3e8; }
+  .tab { display: flex; align-items: center; gap: 8px; height: 32px; padding: 0 14px; font-size: 12px; border-radius: 8px 8px 0 0; background: #eceef1; color: var(--muted); }
+  .tab.on { background: #fff; color: var(--ink); }
+  .tab img { width: 16px; height: 16px; }
+  .url { padding: 8px 12px; border-bottom: 1px solid var(--border); font: 12px ui-monospace, Consolas, monospace; color: var(--muted); }
+  .appbar { display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 12px; background: var(--surface); border-bottom: 1px solid var(--border); }
+  .appbar img { height: 20px; }
+  .fake-search { flex: 1; height: 28px; border: 1px solid #8a929e; border-radius: 6px; font-size: 12px; color: var(--muted); padding: 4px 10px; }
+  .live { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); } .live::before { content: ''; width: 8px; height: 8px; border-radius: 99px; background: var(--green); }
+  .rows div { display: grid; grid-template-columns: 56px 1fr 44px; padding: 8px 12px; border-bottom: 1px solid var(--border); font: 12px ui-monospace, Consolas, monospace; }
+  .readme { padding: 28px 32px; }
+  .readme img { height: 44px; }
+  .readme p { margin-top: 14px; color: #3d434c; }
+  .badges { display: flex; gap: 6px; margin-top: 14px; } .badges span { font: 11px/18px ui-monospace, Consolas, monospace; padding: 0 6px; border-radius: 4px; background: var(--surface); border: 1px solid var(--border); color: var(--muted); }
+  .term { grid-column: 1 / 3; background: var(--dark); border-radius: 10px; padding: 18px 22px; font: 13px/22px ui-monospace, "Cascadia Code", Consolas, monospace; color: var(--ink-d); }
+  .term .p { color: #9aa3b0; } .term .ok { color: #4ade80; } .term .i { color: var(--indigo-d); }
+  .icons { display: flex; gap: 20px; align-items: flex-end; }
+  .icons img { display: block; }
+</style></head>
+<body>
+
+<section class="slide"><div class="label">req-inspect · logo</div>
+  <div class="center"><img src="svg/lockup-horizontal-color.svg" style="height:120px" alt="req-inspect"></div>
+  <p style="position:absolute;left:48px;bottom:40px;max-width:640px">The r passes over to the i, and its dot is the live signal: the one point of color, like the connection dot in the dashboard.</p>
+</section>
+
+<section class="slide dark"><div class="label">On dark</div>
+  <div class="center"><img src="svg/lockup-stacked-color-on-dark.svg" style="height:360px" alt="req-inspect"></div>
+</section>
+
+<section class="slide"><div class="label">Construction</div>
+  <div class="grid">
+    <div class="constr"><img src="svg/symbol-black.svg" alt=""></div>
+    <div class="facts">
+      <div><b>256-unit grid, 16 px steps</b><span>The same grid as a 16 px favicon: every gap is at least one pixel there.</span></div>
+      <div><b>Stems 36 · terminal radius 18 · dot 44</b><span>Flat stem ends, one round terminal, one circle. The wordmark uses the same parts: flat stems, round ends, circular bowls.</span></div>
+      <div><b>Small-size cut below 48 px</b><span>Heavier stems (48), a larger dot and wider gaps so the r and i stay apart at 16 px.</span></div>
+      <div class="sizes">
+        <div><img src="svg/symbol-color.svg" width="96" height="96" alt="">96</div>
+        <div><img src="svg/symbol-color.svg" width="48" height="48" alt="">48</div>
+        <div><img src="svg/symbol-small.svg" width="32" height="32" alt="">32 small cut</div>
+        <div><img src="svg/symbol-small.svg" width="16" height="16" alt="">16 small cut</div>
+        <div><img src="svg/symbol-color.svg" width="16" height="16" alt="">16 regular</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="slide"><div class="label">Colour</div>
+  <div class="swatches">
+    <div class="sw" style="background:#1b1f24;color:#e6e9ef"><b>Ink</b>#1b1f24 · token ink<br>RGB 27 31 36</div>
+    <div class="sw" style="background:#4338ca;color:#fff"><b>Indigo</b>#4338ca · token accent<br>RGB 67 56 202</div>
+    <div class="sw" style="background:#e6e9ef;color:#1b1f24"><b>Ink on dark</b>#e6e9ef</div>
+    <div class="sw" style="background:#a5b4fc;color:#11143a"><b>Indigo on dark</b>#a5b4fc</div>
+  </div>
+  <div class="variants">
+    <div><img src="svg/symbol-color.svg" alt=""></div>
+    <div style="background:#0e1116;border-color:#0e1116"><img src="svg/symbol-color-on-dark.svg" alt=""></div>
+    <div><img src="svg/symbol-black.svg" alt=""></div>
+    <div style="background:#4338ca;border-color:#4338ca"><img src="svg/symbol-white.svg" alt=""></div>
+  </div>
+</section>
+
+<section class="slide"><div class="label">In use</div>
+  <div class="ctx">
+    <div class="win">
+      <div class="tabbar"><div class="tab on"><img src="svg/favicon.svg" alt="">req-inspect</div><div class="tab">localhost:3000</div></div>
+      <div class="url">localhost:3000/_inspect</div>
+      <div class="appbar"><img src="svg/lockup-horizontal-color.svg" alt="req-inspect"><div class="fake-search">Filter by method, path or status</div><div class="live">Live</div></div>
+      <div class="rows"><div><b>GET</b><span>/api/users?page=2</span><span style="color:#15803d">200</span></div><div><b>POST</b><span>/api/orders</span><span style="color:#b91c1c">500</span></div></div>
+    </div>
+    <div class="win readme">
+      <img src="svg/lockup-horizontal-color.svg" alt="req-inspect">
+      <p>A drop-in request inspector for Express: mount one middleware and browse every request and response, live, in a local dashboard.</p>
+      <div class="badges"><span>npm</span><span>node ≥20</span><span>MIT</span></div>
+      <div class="icons" style="margin-top:22px"><img src="svg/app-icon.svg" width="64" height="64" alt=""><img src="svg/favicon.svg" width="32" height="32" alt=""><img src="svg/favicon.svg" width="16" height="16" alt=""></div>
+    </div>
+    <div class="term"><span class="p">$</span> node server.mjs<br>
+      <span class="i">●</span> <b>req-inspect</b> capturing requests · dashboard at <span class="ok">http://localhost:3000/_inspect</span><br>
+      <span class="p">listening on :3000</span></div>
+  </div>
+</section>
+
+</body></html>

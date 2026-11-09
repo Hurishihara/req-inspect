@@ -50,7 +50,14 @@ const coreSubpathPatterns = [
 
 export default tseslint.config(
   {
-    ignores: ['**/dist/**', '**/node_modules/**', 'packages/core/dist/ui/**', '.superpowers/**', 'docs/**'],
+    ignores: [
+      '**/dist/**',
+      '**/node_modules/**',
+      'packages/core/dist/ui/**',
+      '.superpowers/**',
+      'docs/**',
+      'brand/**',
+    ],
   },
   js.configs.recommended,
   {
