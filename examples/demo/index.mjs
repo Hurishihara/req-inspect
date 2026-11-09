@@ -43,6 +43,8 @@ app.get('/image', (req, res) => {
   res.type('png').send(PNG_1X1)
 })
 
+app.get('/big', (req, res) => res.type('text').send('x'.repeat(100_000)))
+
 const port = Number(process.env.PORT) || 3000
 app.listen(port, () => {
   console.log(`Demo on http://localhost:${port} — inspector at http://localhost:${port}/_inspect/`)
