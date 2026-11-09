@@ -1,4 +1,4 @@
-# @req-inspect/core
+<h1><img src="https://raw.githubusercontent.com/Hurishihara/req-inspect/main/brand/logo/png/lockup-horizontal-color-1200.png" alt="@req-inspect/core" width="280"></h1>
 
 Framework-agnostic core of [req-inspect](https://github.com/Hurishihara/req-inspect): record storage, redaction, request capture and the dashboard handler.
 
