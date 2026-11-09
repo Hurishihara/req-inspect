@@ -33,11 +33,11 @@ const parseBlock = (block: string): Theme => {
   return theme
 }
 
-const darkStart = css.indexOf('@media (prefers-color-scheme: dark)')
-const lightSource = darkStart === -1 ? css : css.slice(0, darkStart)
-const darkSource = darkStart === -1 ? '' : css.slice(darkStart)
-const light = parseBlock(lightSource.slice(lightSource.indexOf(':root')))
-const dark = parseBlock(darkSource.slice(darkSource.indexOf(':root')))
+const mediaStart = css.indexOf('@media (prefers-color-scheme: dark)')
+const darkStart = css.indexOf(":root[data-theme='dark']")
+const light = parseBlock(css.slice(0, mediaStart))
+const mediaDark = parseBlock(css.slice(mediaStart, darkStart))
+const dark = parseBlock(css.slice(darkStart))
 
 const resolve = (name: string, primary: Theme): string => {
   let current = name
@@ -89,6 +89,11 @@ test('light theme meets WCAG contrast', () => {
 test('dark theme meets WCAG contrast', () => {
   expect(dark.size).toBeGreaterThan(0)
   expect(check('dark', dark)).toEqual([])
+})
+
+test('media-query dark block declares exactly the same tokens as the data-theme block', () => {
+  expect(mediaDark.size).toBeGreaterThan(0)
+  expect([...mediaDark]).toEqual([...dark])
 })
 
 test('ratio implements the WCAG formula', () => {

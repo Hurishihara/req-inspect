@@ -1,4 +1,16 @@
-export type IconName = 'search' | 'pause' | 'play' | 'trash' | 'copy' | 'info' | 'warn' | 'error' | 'back'
+export type IconName =
+  | 'search'
+  | 'pause'
+  | 'play'
+  | 'trash'
+  | 'copy'
+  | 'info'
+  | 'warn'
+  | 'error'
+  | 'back'
+  | 'sun'
+  | 'moon'
+  | 'monitor'
 
 const paths: Record<IconName, string> = {
   search: 'M7 12A5 5 0 1 0 7 2a5 5 0 0 0 0 10ZM11 11l3.5 3.5',
@@ -10,6 +22,9 @@ const paths: Record<IconName, string> = {
   warn: 'M8 2l6.5 11.5h-13ZM8 6.5v3.5M8 12v.01',
   error: 'M8 14.5a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13ZM5.5 5.5l5 5M10.5 5.5l-5 5',
   back: 'M10 3L5 8l5 5',
+  sun: 'M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM8 1.5v1.5M8 13v1.5M1.5 8H3M13 8h1.5M3.4 3.4l1 1M11.6 11.6l1 1M3.4 12.6l1-1M11.6 4.4l1-1',
+  moon: 'M13.5 9.5A5.5 5.5 0 0 1 6.5 2.5a5.5 5.5 0 1 0 7 7Z',
+  monitor: 'M2 2.5h12v8H2ZM5.5 13.5h5M8 10.5v3',
 }
 
 export const Icon = ({ name, className }: { name: IconName; className?: string }) => (

@@ -13,6 +13,7 @@ import { Button } from '../ui/Button'
 import { EmptyState } from '../ui/EmptyState'
 import { LiveIndicator } from '../ui/LiveIndicator'
 import { SearchField } from '../ui/SearchField'
+import { ThemeToggle } from '../ui/ThemeToggle'
 import { emptyReason, listKeyIndex } from '../view'
 import { RequestRow } from './RequestRow'
 
@@ -78,6 +79,7 @@ export const RequestList = ({
           Clear
         </Button>
         <LiveIndicator conn={state.conn} paused={state.paused} pending={state.pending.length} />
+        <ThemeToggle />
       </div>
       {reason === 'waiting' && (
         <EmptyState
