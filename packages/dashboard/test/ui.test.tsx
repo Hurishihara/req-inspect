@@ -1,11 +1,72 @@
 import { describe, expect, test } from 'bun:test'
+import { createRef } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 
 import { Banner } from '../src/ui/Banner'
 import { Button } from '../src/ui/Button'
+import { CodeBlock } from '../src/ui/CodeBlock'
 import { EmptyState } from '../src/ui/EmptyState'
+import { KeyValueList } from '../src/ui/KeyValueList'
 import { LiveIndicator } from '../src/ui/LiveIndicator'
+import { SearchField } from '../src/ui/SearchField'
 import { StatusBadge } from '../src/ui/StatusBadge'
+import { Tabs } from '../src/ui/Tabs'
+
+const noop = () => undefined
+
+describe('Tabs', () => {
+  test('roving tabindex and aria', () => {
+    const tabs = [
+      { id: 'request', label: 'Request' },
+      { id: 'response', label: 'Response' },
+      { id: 'curl', label: 'cURL' },
+    ]
+    const h = renderToStaticMarkup(<Tabs tabs={tabs} value="request" onChange={noop} idPrefix="d" />)
+    expect(h).toContain('role="tablist"')
+    expect(h.match(/role="tab"/g)).toHaveLength(3)
+    expect(h).toContain('aria-selected="true"')
+    expect(h).toContain('tabindex="0"')
+    expect(h).toContain('aria-controls="d-panel-request"')
+    expect(h).toContain('id="d-tab-request"')
+    expect(h).toContain('border-accent')
+    expect(h.match(/tabindex="-1"/g)).toHaveLength(2)
+  })
+})
+
+describe('SearchField', () => {
+  const render = (value: string) =>
+    renderToStaticMarkup(<SearchField value={value} onChange={noop} onClear={noop} inputRef={createRef()} />)
+  test('empty shows kbd', () => {
+    const h = render('')
+    expect(h).toContain('aria-label="Filter requests"')
+    expect(h).toContain('placeholder="Filter: POST /users 5xx"')
+    expect(h).toMatch(/<kbd[^>]*>\/<\/kbd>/)
+  })
+  test('with text hides kbd', () => {
+    expect(render('x')).not.toContain('<kbd')
+  })
+})
+
+describe('KeyValueList', () => {
+  test('redacted', () => {
+    const h = renderToStaticMarkup(<KeyValueList entries={[['authorization', '[redacted]']]} />)
+    expect(h).toContain('<dl')
+    expect(h).toContain('italic')
+    expect(h).toContain('text-syntax-null')
+  })
+  test('empty', () => {
+    expect(renderToStaticMarkup(<KeyValueList entries={[]} />)).toContain('No headers')
+  })
+})
+
+describe('CodeBlock', () => {
+  test('renders', () => {
+    const h = renderToStaticMarkup(<CodeBlock meta="text/plain · 214 B" text="hello" />)
+    expect(h).toContain('text/plain · 214 B')
+    expect(h).toContain('Copy')
+    expect(h).toMatch(/<pre[^>]*>hello<\/pre>/)
+  })
+})
 
 describe('StatusBadge', () => {
   test('404', () => {
