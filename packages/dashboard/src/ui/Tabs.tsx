@@ -33,7 +33,7 @@ export const Tabs = ({
   }
 
   return (
-    <div className="flex h-toolbar items-center gap-1 border-b border-border bg-surface px-2">
+    <div className="flex h-toolbar shrink-0 items-center gap-1 border-b border-border bg-surface px-2">
       {leading}
       <div role="tablist" className="flex h-full gap-1">
         {tabs.map((t, i) => {

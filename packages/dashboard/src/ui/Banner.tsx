@@ -31,7 +31,12 @@ export const Banner = ({
       <Icon name={s.name} className={`mt-0.5 ${s.icon}`} />
       <div className="min-w-0 flex-1">
         <strong className="font-semibold">{title}</strong>
-        {children && <span className="ml-1">{children}</span>}
+        {children && (
+          <>
+            {' '}
+            <span>{children}</span>
+          </>
+        )}
       </div>
       {action}
     </div>

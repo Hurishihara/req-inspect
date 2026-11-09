@@ -1,4 +1,11 @@
-import { type Dispatch, type KeyboardEvent, type RefObject, useRef } from 'react'
+import {
+  type Dispatch,
+  type KeyboardEvent,
+  type MutableRefObject,
+  type RefObject,
+  useEffect,
+  useRef,
+} from 'react'
 
 import { matchesFilter } from '../filter'
 import type { Action, State } from '../reducer'
@@ -6,39 +13,38 @@ import { Button } from '../ui/Button'
 import { EmptyState } from '../ui/EmptyState'
 import { LiveIndicator } from '../ui/LiveIndicator'
 import { SearchField } from '../ui/SearchField'
-import { emptyReason, nextIndex } from '../view'
+import { emptyReason, listKeyIndex } from '../view'
 import { RequestRow } from './RequestRow'
-
-const keyDelta = (key: string): number | null => {
-  if (key === 'ArrowDown') return 1
-  if (key === 'ArrowUp') return -1
-  if (key === 'Home') return -Infinity
-  if (key === 'End') return Infinity
-  return null
-}
 
 export const RequestList = ({
   state,
   dispatch,
   onClear,
   filterRef,
+  focusIdRef,
 }: {
   state: State
   dispatch: Dispatch<Action>
   onClear: () => void
   filterRef: RefObject<HTMLInputElement | null>
+  focusIdRef?: MutableRefObject<string | null>
 }) => {
   const rows = state.items.filter((r) => matchesFilter(r, state.filter))
   const rowEls = useRef(new Map<string, HTMLButtonElement>())
   const selectedIndex = rows.findIndex((r) => r.id === state.selectedId)
   const reason = emptyReason(state.items.length, rows.length)
 
+  useEffect(() => {
+    const id = focusIdRef?.current
+    if (!id) return
+    rowEls.current.get(id)?.focus()
+    focusIdRef.current = null
+  }, [focusIdRef])
+
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    const delta = keyDelta(e.key)
-    if (delta === null) return
+    const idx = listKeyIndex(e.key, selectedIndex, rows.length)
+    if (idx === null) return
     e.preventDefault()
-    const idx = nextIndex(selectedIndex, delta, rows.length)
-    if (idx < 0) return
     const target = rows[idx]
     dispatch({ type: 'select', id: target.id })
     rowEls.current.get(target.id)?.focus()

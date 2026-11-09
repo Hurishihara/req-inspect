@@ -1,6 +1,14 @@
 import { describe, expect, test } from 'bun:test'
 
-import { emptyReason, isSlow, isTypingTarget, nextIndex, statusClass, tabKeyIndex } from '../src/view'
+import {
+  emptyReason,
+  isSlow,
+  isTypingTarget,
+  listKeyIndex,
+  nextIndex,
+  statusClass,
+  tabKeyIndex,
+} from '../src/view'
 
 describe('statusClass', () => {
   test.each([
@@ -69,5 +77,17 @@ describe('isTypingTarget', () => {
     expect(isTypingTarget({ tagName: 'DIV', isContentEditable: true })).toBe(true)
     expect(isTypingTarget({ tagName: 'BUTTON' })).toBe(false)
     expect(isTypingTarget(null)).toBe(false)
+  })
+})
+
+describe('listKeyIndex', () => {
+  test('maps keys', () => {
+    expect(listKeyIndex('End', -1, 5)).toBe(4)
+    expect(listKeyIndex('Home', 3, 5)).toBe(0)
+    expect(listKeyIndex('ArrowDown', 1, 5)).toBe(2)
+    expect(listKeyIndex('ArrowUp', 0, 5)).toBe(0)
+    expect(listKeyIndex('ArrowDown', -1, 5)).toBe(0)
+    expect(listKeyIndex('End', -1, 0)).toBeNull()
+    expect(listKeyIndex('x', 0, 5)).toBeNull()
   })
 })

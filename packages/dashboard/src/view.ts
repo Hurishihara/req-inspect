@@ -17,6 +17,15 @@ export const nextIndex = (current: number, delta: number, length: number): numbe
   return Math.min(length - 1, Math.max(0, current + delta))
 }
 
+export const listKeyIndex = (key: string, current: number, length: number): number | null => {
+  if (length === 0) return null
+  if (key === 'Home') return 0
+  if (key === 'End') return length - 1
+  if (key === 'ArrowDown') return nextIndex(current, 1, length)
+  if (key === 'ArrowUp') return nextIndex(current, -1, length)
+  return null
+}
+
 export const tabKeyIndex = (key: string, current: number, length: number): number | null => {
   if (key === 'ArrowRight') return (current + 1) % length
   if (key === 'ArrowLeft') return (current - 1 + length) % length

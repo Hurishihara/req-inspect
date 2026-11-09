@@ -4,7 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import type { RequestSummary } from '@req-inspect/core'
 
 import { BodyView } from '../src/components/BodyView'
-import { DetailPane } from '../src/components/DetailPane'
+import { DetailPane, DetailView } from '../src/components/DetailPane'
 import { JsonTree } from '../src/components/JsonTree'
 import { RequestList } from '../src/components/RequestList'
 import { RequestRow } from '../src/components/RequestRow'
@@ -18,7 +18,7 @@ import { LiveIndicator } from '../src/ui/LiveIndicator'
 import { SearchField } from '../src/ui/SearchField'
 import { StatusBadge } from '../src/ui/StatusBadge'
 import { Tabs } from '../src/ui/Tabs'
-import { sum } from './helpers'
+import { full, sum } from './helpers'
 
 const noop = () => undefined
 
@@ -161,8 +161,11 @@ describe('LiveIndicator', () => {
     expect(renderToStaticMarkup(<LiveIndicator conn="reconnecting" paused={false} pending={0} />)).toContain(
       'Reconnecting…',
     )
-    expect(renderToStaticMarkup(<LiveIndicator conn="live" paused pending={4} />)).toContain(
-      'Paused · 4 waiting',
+    const paused = renderToStaticMarkup(<LiveIndicator conn="live" paused pending={4} />)
+    expect(paused).toContain('Paused')
+    expect(paused).toContain('<span aria-hidden="true"> · 4 waiting</span>')
+    expect(renderToStaticMarkup(<LiveIndicator conn="live" paused={false} pending={4} />)).not.toContain(
+      'waiting',
     )
   })
 })
@@ -234,8 +237,7 @@ describe('BodyView, JsonTree, DetailPane', () => {
       <BodyView body={{ kind: 'text', value: 'hi', size: 2_000_000, truncated: true }} />,
     )
     expect(h).toContain('bg-info-bg')
-    expect(h).toContain('Truncated.')
-    expect(h).toContain('Showing the first 64 KB of 1.9 MB.')
+    expect(h).toContain('Truncated.</strong> <span>Showing the first 64 KB of 1.9 MB.')
     expect(h).toContain('text · 1.9 MB')
   })
   test('binary body', () => {
@@ -253,6 +255,13 @@ describe('BodyView, JsonTree, DetailPane', () => {
     }
     expect(h).toContain('aria-expanded="true"')
     expect(h).toContain('aria-label="Collapse"')
+  })
+  test('detail view keeps tabs fixed and scrolls the panel', () => {
+    const h = renderToStaticMarkup(<DetailView record={full()} onBack={() => undefined} autoFocusBack />)
+    expect(h).toContain('flex min-h-0 min-w-0 flex-1 flex-col')
+    expect(h).toContain('h-toolbar shrink-0')
+    expect(h).toMatch(/role="tabpanel"[^>]*tabindex="0"[^>]*class="min-h-0 flex-1 overflow-auto p-4"/)
+    expect(h).not.toContain('detail min-w-0 flex-1 overflow-auto')
   })
   test('detail pane without selection', () => {
     const h = renderToStaticMarkup(<DetailPane id={null} />)
