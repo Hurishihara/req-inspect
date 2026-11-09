@@ -14,6 +14,7 @@ Open [board.html](board.html) (or [board.png](board.png)) for the presentation w
 | Below 48 px | `svg/symbol-small.svg` (small cut: heavier stems, wider gaps) |
 | Browser tab | `svg/favicon.svg`, `png/favicon.ico` (16/32/48) |
 | Home screen, PWA | `png/apple-touch-icon-180.png`, `png/icon-192.png`, `png/icon-512.png`, `svg/app-icon.svg` |
+| GitHub social preview, Open Graph card | `png/social-preview-1280x640.png` (`svg/social-preview.svg`) |
 | Slides, chat, anywhere raster | `png/*-1200.png`, `png/symbol-*-512.png` (transparent) |
 
 Rebuild everything from the geometry in [build.mjs](build.mjs) with `node brand/logo/build.mjs`, then `node brand/logo/export.mjs` for the PNGs and ICO. Export needs Microsoft Edge.

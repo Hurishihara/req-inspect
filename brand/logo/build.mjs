@@ -73,12 +73,23 @@ const files = {
 // i (dot top y=4 to baseline y=150), so both share a baseline and a top. Gap = one wordmark x-height (100).
 // Wordmark i-dot stays ink in lockups so there is one indigo dot: the symbol's.
 const H = 204
-const lockH = (letters, dot) => {
+const lockHParts = (letters, dot) => {
   const s = (150 - 4) / (196 - 62)
   const ty = 150 - 196 * s
   const left = 56 * s
   const wordX = Math.round(204 * s - left + 100)
-  return svg(`0 0 ${wordX + 1112} ${H}`, `<g transform="translate(${(-left).toFixed(2)} ${ty.toFixed(2)}) scale(${s.toFixed(4)})">${symbolParts(letters, dot)}</g><g transform="translate(${wordX} 0)">${wordParts(letters, letters)}</g>`, 'req-inspect')
+  return { w: wordX + 1112, body: `<g transform="translate(${(-left).toFixed(2)} ${ty.toFixed(2)}) scale(${s.toFixed(4)})">${symbolParts(letters, dot)}</g><g transform="translate(${wordX} 0)">${wordParts(letters, letters)}</g>` }
+}
+const lockH = (letters, dot) => {
+  const { w, body } = lockHParts(letters, dot)
+  return svg(`0 0 ${w} ${H}`, body, 'req-inspect')
+}
+// Social preview card (GitHub/Open Graph, 1280x640): on-dark horizontal lockup centred at 60% width on the ink tile.
+const socialCard = () => {
+  const CW = 1280, CH = 640
+  const { w, body } = lockHParts(COLORS.inkDark, COLORS.indigoDark)
+  const lw = CW * 0.6, lh = (lw * H) / w
+  return svg(`0 0 ${CW} ${CH}`, `<rect width="${CW}" height="${CH}" fill="${COLORS.tile}"/><svg x="${(CW - lw) / 2}" y="${((CH - lh) / 2).toFixed(2)}" width="${lw}" height="${lh.toFixed(2)}" viewBox="0 0 ${w} ${H}">${body}</svg>`, 'req-inspect')
 }
 // Stacked: symbol centred above wordmark at 40% width.
 const lockS = (letters, dot) => {
@@ -92,6 +103,7 @@ Object.assign(files, {
   'lockup-horizontal-white.svg': lockH('#ffffff', '#ffffff'),
   'lockup-stacked-color.svg': lockS(COLORS.ink, COLORS.indigo),
   'lockup-stacked-color-on-dark.svg': lockS(COLORS.inkDark, COLORS.indigoDark),
+  'social-preview.svg': socialCard(),
 })
 
 for (const [name, body] of Object.entries(files)) fs.writeFileSync(path.join(OUT, name), body)

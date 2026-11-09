@@ -52,6 +52,7 @@ const jobs = [
   ['app-icon.svg', 'icon-512.png', 512, 512],
   ['symbol-color.svg', 'symbol-color-512.png', 512, 512],
   ['symbol-color-on-dark.svg', 'symbol-color-on-dark-512.png', 512, 512],
+  ['social-preview.svg', 'social-preview-1280x640.png', 1280, 640],
 ]
 const lockW = (f) => { const [, , w, h] = fs.readFileSync(path.join(SVG, f), 'utf8').match(/viewBox="([\d.-]+) ([\d.-]+) ([\d.]+) ([\d.]+)"/).slice(1).map(Number); return [1200, Math.round((1200 * h) / w)] }
 for (const f of ['lockup-horizontal-color.svg', 'lockup-horizontal-color-on-dark.svg', 'lockup-horizontal-black.svg', 'lockup-horizontal-white.svg', 'wordmark-color.svg', 'lockup-stacked-color.svg']) {
