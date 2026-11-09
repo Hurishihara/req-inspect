@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="req-inspect"><title>req-inspect</title>
+  <rect fill="#000000" x="56" y="84" width="36" height="112" rx="4"/>
+  <path fill="#000000" d="M56 134C56 92 86 66 124 66A18 18 0 0 1 124 102C104 102 92 114 92 134Z"/>
+  <rect fill="#000000" x="164" y="124" width="36" height="72" rx="4"/>
+  <circle fill="#000000" cx="182" cy="84" r="22"/>
+</svg>

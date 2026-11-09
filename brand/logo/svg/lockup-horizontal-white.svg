@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1373 204" role="img" aria-label="req-inspect"><title>req-inspect</title><g transform="translate(-61.01 -63.55) scale(1.0896)">
+  <rect fill="#ffffff" x="56" y="84" width="36" height="112" rx="4"/>
+  <path fill="#ffffff" d="M56 134C56 92 86 66 124 66A18 18 0 0 1 124 102C104 102 92 114 92 134Z"/>
+  <rect fill="#ffffff" x="164" y="124" width="36" height="72" rx="4"/>
+  <circle fill="#ffffff" cx="182" cy="84" r="22"/></g><g transform="translate(261 0)"><g fill="none" stroke="#ffffff" stroke-width="20" stroke-linecap="round">
+  <path d="M10 50V150" stroke-linecap="butt"/><path d="M10 100C10 68 30 50 60 50"/>
+  <path d="M100 100H180A40 40 0 1 0 168.3 128.3" stroke-linecap="butt"/><path d="M168.3 128.3l0 0"/>
+  <circle cx="260" cy="100" r="40"/><path d="M300 50V192" stroke-linecap="butt"/>
+  <path d="M344 100H380"/>
+  <path d="M424 50V150" stroke-linecap="butt"/>
+  <path d="M468 50V150" stroke-linecap="butt"/><path d="M468 100A40 40 0 0 1 548 100V150" stroke-linecap="butt"/>
+  <path d="M650 64C636 50 596 50 596 76C596 100 652 96 652 122C652 152 606 152 592 136"/>
+  <path d="M696 50V192" stroke-linecap="butt"/><circle cx="746" cy="100" r="40"/>
+  <path d="M830 100H910A40 40 0 1 0 898.3 128.3" stroke-linecap="butt"/><path d="M898.3 128.3l0 0"/>
+  <path d="M1012.3 71.7A40 40 0 1 0 1012.3 128.3"/>
+  <path d="M1066 18V122C1066 142 1076 150 1094 150"/><path d="M1044 56H1094"/>
+</g><circle fill="#ffffff" cx="424" cy="18" r="14"/></g>
+</svg>
