@@ -14,16 +14,20 @@ export const CodeBlock = ({ meta, text }: { meta: string; text: string }) => {
   )
 
   const copy = () => {
-    navigator.clipboard.writeText(text).then(
-      () => {
-        setCopied(true)
-        clearTimeout(timer.current)
-        timer.current = setTimeout(() => {
-          setCopied(false)
-        }, 1500)
-      },
-      () => undefined,
-    )
+    try {
+      void navigator.clipboard.writeText(text).then(
+        () => {
+          setCopied(true)
+          clearTimeout(timer.current)
+          timer.current = setTimeout(() => {
+            setCopied(false)
+          }, 1500)
+        },
+        () => undefined,
+      )
+    } catch {
+      // clipboard unavailable: ignore
+    }
   }
 
   return (
