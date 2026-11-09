@@ -23,23 +23,44 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'response', label: 'Response' },
 ]
 
-const Shell = ({ onBack, busy, children }: { onBack?: () => void; busy?: boolean; children: ReactNode }) => (
-  <section className="detail min-w-0 flex-1 overflow-auto" aria-busy={busy}>
+const SECTION = 'detail flex min-h-0 min-w-0 flex-1 flex-col'
+
+const BackButton = ({ onBack, autoFocus }: { onBack: () => void; autoFocus: boolean }) => (
+  <Button variant="ghost" icon="back" aria-label="Back to requests" onClick={onBack} autoFocus={autoFocus} />
+)
+
+const Shell = ({
+  onBack,
+  autoFocusBack,
+  busy,
+  children,
+}: {
+  onBack?: () => void
+  autoFocusBack: boolean
+  busy?: boolean
+  children: ReactNode
+}) => (
+  <section className={SECTION} aria-busy={busy}>
     {onBack && (
-      <div className="flex h-toolbar items-center border-b border-border bg-surface px-2">
-        <Button variant="ghost" icon="back" aria-label="Back to requests" onClick={onBack} />
+      <div className="flex h-toolbar shrink-0 items-center border-b border-border bg-surface px-2">
+        <BackButton onBack={onBack} autoFocus={autoFocusBack} />
       </div>
     )}
     {children}
   </section>
 )
 
-export const DetailPane = ({ id, onBack }: { id: string | null; onBack?: () => void }) => {
-  const [tab, setTab] = useState<Tab>('overview')
+export const DetailPane = ({
+  id,
+  onBack,
+  autoFocusBack = false,
+}: {
+  id: string | null
+  onBack?: () => void
+  autoFocusBack?: boolean
+}) => {
   const [loaded, setLoaded] = useState<Loaded | null>(null)
-  const [copied, setCopied] = useState(false)
   const [retry, setRetry] = useState(0)
-  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- drop the previous record immediately when the selection changes so stale data is never shown
@@ -58,14 +79,7 @@ export const DetailPane = ({ id, onBack }: { id: string | null; onBack?: () => v
     }
   }, [id, retry])
 
-  useEffect(
-    () => () => {
-      clearTimeout(timer.current)
-    },
-    [],
-  )
-
-  const back = onBack ? { onBack } : {}
+  const back = onBack ? { onBack, autoFocusBack } : { autoFocusBack }
   if (!id) {
     return (
       <Shell {...back}>
@@ -114,6 +128,29 @@ export const DetailPane = ({ id, onBack }: { id: string | null; onBack?: () => v
     )
   }
 
+  return <DetailView record={r} {...(onBack ? { onBack, autoFocusBack } : {})} />
+}
+
+export const DetailView = ({
+  record: r,
+  onBack,
+  autoFocusBack = false,
+}: {
+  record: RequestRecord
+  onBack?: () => void
+  autoFocusBack?: boolean
+}) => {
+  const [tab, setTab] = useState<Tab>('overview')
+  const [copied, setCopied] = useState(false)
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+
+  useEffect(
+    () => () => {
+      clearTimeout(timer.current)
+    },
+    [],
+  )
+
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(toCurl(r, location.origin))
@@ -132,7 +169,7 @@ export const DetailPane = ({ id, onBack }: { id: string | null; onBack?: () => v
   const headers = (h: Record<string, string>) => <KeyValueList entries={Object.entries(h)} />
 
   return (
-    <section className="detail min-w-0 flex-1 overflow-auto">
+    <section className={SECTION}>
       <Tabs
         tabs={TABS}
         value={tab}
@@ -140,11 +177,15 @@ export const DetailPane = ({ id, onBack }: { id: string | null; onBack?: () => v
           setTab(t as Tab)
         }}
         idPrefix="detail"
-        leading={
-          onBack && <Button variant="ghost" icon="back" aria-label="Back to requests" onClick={onBack} />
-        }
+        leading={onBack && <BackButton onBack={onBack} autoFocus={autoFocusBack} />}
       />
-      <div role="tabpanel" id={`detail-panel-${tab}`} aria-labelledby={`detail-tab-${tab}`} className="p-4">
+      <div
+        role="tabpanel"
+        id={`detail-panel-${tab}`}
+        aria-labelledby={`detail-tab-${tab}`}
+        tabIndex={0}
+        className="min-h-0 flex-1 overflow-auto p-4"
+      >
         {tab === 'overview' && (
           <KeyValueList
             entries={[

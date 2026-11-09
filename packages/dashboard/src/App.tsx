@@ -12,6 +12,7 @@ export const App = () => {
   const [state, dispatch] = useReducer(reducer, { ...initialState, selectedId: idFromHash(location.hash) })
   const prevConn = useRef(state.conn)
   const filterRef = useRef<HTMLInputElement>(null)
+  const focusIdRef = useRef<string | null>(null)
   useKeyboardNav({ filterRef })
   const narrow = useMediaQuery('(max-width: 719px)')
 
@@ -84,6 +85,7 @@ export const App = () => {
         state={state}
         dispatch={dispatch}
         filterRef={filterRef}
+        focusIdRef={focusIdRef}
         onClear={() => {
           void onClear()
         }}
@@ -100,7 +102,9 @@ export const App = () => {
           <div className="flex min-w-0 flex-1 flex-col">
             <DetailPane
               id={state.selectedId}
+              autoFocusBack
               onBack={() => {
+                focusIdRef.current = state.selectedId
                 dispatch({ type: 'select', id: null })
               }}
             />
