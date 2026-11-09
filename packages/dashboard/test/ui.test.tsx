@@ -220,7 +220,10 @@ describe('RequestRow and RequestList', () => {
           filterRef={ref}
         />,
       )
-    expect(list([], '')).toContain('Waiting for requests')
+    const waiting = list([], '')
+    expect(waiting).toContain('Waiting for requests')
+    expect(waiting).toContain('Try')
+    expect(waiting).toContain('font-mono text-code">curl http://localhost:3000</code>')
     const none = list([sum('r1', { method: 'GET' })], 'post')
     expect(none).toContain('No matches')
     expect(none).toContain('Nothing matches &quot;post&quot;.')
@@ -273,6 +276,6 @@ describe('BodyView, JsonTree, DetailPane', () => {
   test('detail pane without selection', () => {
     const h = renderToStaticMarkup(<DetailPane id={null} />)
     expect(h).toContain('Select a request')
-    expect(h).toContain('Pick a row to see its headers and body.')
+    expect(h).toContain('Use ↑↓ to move through the list.')
   })
 })

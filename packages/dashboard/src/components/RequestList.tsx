@@ -16,6 +16,8 @@ import { SearchField } from '../ui/SearchField'
 import { emptyReason, listKeyIndex } from '../view'
 import { RequestRow } from './RequestRow'
 
+const origin = () => (typeof location === 'undefined' ? 'http://localhost:3000' : location.origin)
+
 export const RequestList = ({
   state,
   dispatch,
@@ -80,7 +82,15 @@ export const RequestList = ({
       {reason === 'waiting' && (
         <EmptyState
           title="Waiting for requests"
-          hint="Send a request to your app and it appears here live."
+          hint={
+            <>
+              Send a request to your app and it appears here live. Try{' '}
+              <code className="rounded-sm border border-border bg-surface px-1 font-mono text-code">
+                curl {origin()}
+              </code>
+              .
+            </>
+          }
         />
       )}
       {reason === 'no-matches' && (
