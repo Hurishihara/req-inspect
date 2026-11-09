@@ -1,7 +1,11 @@
 import { describe, expect, test } from 'bun:test'
 import { createRef } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
+import type { RequestSummary } from '@req-inspect/core'
 
+import { RequestList } from '../src/components/RequestList'
+import { RequestRow } from '../src/components/RequestRow'
+import { initialState } from '../src/reducer'
 import { Banner } from '../src/ui/Banner'
 import { Button } from '../src/ui/Button'
 import { CodeBlock } from '../src/ui/CodeBlock'
@@ -11,6 +15,7 @@ import { LiveIndicator } from '../src/ui/LiveIndicator'
 import { SearchField } from '../src/ui/SearchField'
 import { StatusBadge } from '../src/ui/StatusBadge'
 import { Tabs } from '../src/ui/Tabs'
+import { sum } from './helpers'
 
 const noop = () => undefined
 
@@ -164,5 +169,58 @@ describe('EmptyState', () => {
     const h = renderToStaticMarkup(<EmptyState title="No matches" action={<button>Clear</button>} />)
     expect(h).toContain('No matches')
     expect(h).toContain('<button>Clear</button>')
+  })
+})
+
+describe('RequestRow and RequestList', () => {
+  test('row markup', () => {
+    const item = sum('r1', {
+      method: 'POST',
+      url: '/api/users?x=1',
+      route: '/api/users',
+      status: 503,
+      durationMs: 1200,
+    })
+    const h = renderToStaticMarkup(<RequestRow item={item} selected focusable onSelect={noop} />)
+    expect(h).toContain('role="option"')
+    expect(h).toContain('aria-selected="true"')
+    expect(h).toContain('POST')
+    expect(h).toMatch(/class="[^"]*truncate[^"]*">\/api\/users\?x=1</)
+    expect(h).toContain('>/api/users<')
+    expect(h).toMatch(/text-status-4xx[^>]*>1\.2 s</)
+    expect(h).toContain('503')
+  })
+  test('fast row is not flagged', () => {
+    const h = renderToStaticMarkup(
+      <RequestRow item={sum('r1', { durationMs: 48 })} selected={false} focusable={false} onSelect={noop} />,
+    )
+    expect(h).toContain('48 ms')
+    expect(h).not.toContain('text-status-4xx')
+  })
+  test('aborted badge', () => {
+    const h = renderToStaticMarkup(
+      <RequestRow item={sum('r1', { aborted: true })} selected={false} focusable onSelect={noop} />,
+    )
+    expect(h).toContain('aborted')
+  })
+  test('list states', () => {
+    const ref = createRef<HTMLInputElement>()
+    const list = (items: RequestSummary[], filter: string) =>
+      renderToStaticMarkup(
+        <RequestList
+          state={{ ...initialState, items, filter }}
+          dispatch={noop}
+          onClear={noop}
+          filterRef={ref}
+        />,
+      )
+    expect(list([], '')).toContain('Waiting for requests')
+    const none = list([sum('r1', { method: 'GET' })], 'post')
+    expect(none).toContain('No matches')
+    expect(none).toContain('Nothing matches &quot;post&quot;.')
+    expect(none).toContain('Clear filter')
+    const some = list([sum('r1')], '')
+    expect(some).toContain('role="listbox"')
+    expect(some).toContain('aria-label="Requests"')
   })
 })

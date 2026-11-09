@@ -2,6 +2,7 @@ import { useEffect, useReducer, useRef } from 'react'
 
 import { clearAll, fetchList, subscribe } from './api'
 import { idFromHash } from './hash'
+import { useKeyboardNav } from './hooks/useKeyboardNav'
 import { initialState, reducer } from './reducer'
 import { RequestList } from './components/RequestList'
 import { DetailPane } from './components/DetailPane'
@@ -9,6 +10,8 @@ import { DetailPane } from './components/DetailPane'
 export const App = () => {
   const [state, dispatch] = useReducer(reducer, { ...initialState, selectedId: idFromHash(location.hash) })
   const prevConn = useRef(state.conn)
+  const filterRef = useRef<HTMLInputElement>(null)
+  useKeyboardNav({ filterRef })
 
   useEffect(() => {
     let alive = true
@@ -78,6 +81,7 @@ export const App = () => {
       <RequestList
         state={state}
         dispatch={dispatch}
+        filterRef={filterRef}
         onClear={() => {
           void onClear()
         }}
