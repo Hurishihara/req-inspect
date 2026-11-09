@@ -61,6 +61,7 @@ export const DetailPane = ({
 }) => {
   const [loaded, setLoaded] = useState<Loaded | null>(null)
   const [retry, setRetry] = useState(0)
+  const [tab, setTab] = useState<Tab>('overview')
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- drop the previous record immediately when the selection changes so stale data is never shown
@@ -128,19 +129,24 @@ export const DetailPane = ({
     )
   }
 
-  return <DetailView record={r} {...(onBack ? { onBack, autoFocusBack } : {})} />
+  return (
+    <DetailView record={r} tab={tab} onTabChange={setTab} {...(onBack ? { onBack, autoFocusBack } : {})} />
+  )
 }
 
 export const DetailView = ({
   record: r,
+  tab,
+  onTabChange,
   onBack,
   autoFocusBack = false,
 }: {
   record: RequestRecord
+  tab: Tab
+  onTabChange: (tab: Tab) => void
   onBack?: () => void
   autoFocusBack?: boolean
 }) => {
-  const [tab, setTab] = useState<Tab>('overview')
   const [copied, setCopied] = useState(false)
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
@@ -174,7 +180,7 @@ export const DetailView = ({
         tabs={TABS}
         value={tab}
         onChange={(t) => {
-          setTab(t as Tab)
+          onTabChange(t as Tab)
         }}
         idPrefix="detail"
         leading={onBack && <BackButton onBack={onBack} autoFocus={autoFocusBack} />}

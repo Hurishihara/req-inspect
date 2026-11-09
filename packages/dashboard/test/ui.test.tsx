@@ -257,11 +257,18 @@ describe('BodyView, JsonTree, DetailPane', () => {
     expect(h).toContain('aria-label="Collapse"')
   })
   test('detail view keeps tabs fixed and scrolls the panel', () => {
-    const h = renderToStaticMarkup(<DetailView record={full()} onBack={() => undefined} autoFocusBack />)
+    const h = renderToStaticMarkup(
+      <DetailView record={full()} tab="overview" onTabChange={noop} onBack={() => undefined} autoFocusBack />,
+    )
     expect(h).toContain('flex min-h-0 min-w-0 flex-1 flex-col')
     expect(h).toContain('h-toolbar shrink-0')
     expect(h).toMatch(/role="tabpanel"[^>]*tabindex="0"[^>]*class="min-h-0 flex-1 overflow-auto p-4"/)
     expect(h).not.toContain('detail min-w-0 flex-1 overflow-auto')
+  })
+  test('detail view renders the tab it is given', () => {
+    const h = renderToStaticMarkup(<DetailView record={full()} tab="response" onTabChange={noop} />)
+    expect(h).toContain('id="detail-panel-response"')
+    expect(h).not.toContain('id="detail-panel-overview"')
   })
   test('detail pane without selection', () => {
     const h = renderToStaticMarkup(<DetailPane id={null} />)
