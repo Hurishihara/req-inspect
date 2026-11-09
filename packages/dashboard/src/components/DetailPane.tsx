@@ -84,7 +84,7 @@ export const DetailPane = ({
   if (!id) {
     return (
       <Shell {...back}>
-        <EmptyState title="Select a request" hint="Use ↑↓ to move through the list." />
+        <EmptyState title="Select a request" mark={32} hint="Use ↑↓ to move through the list." />
       </Shell>
     )
   }

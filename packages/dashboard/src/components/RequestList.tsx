@@ -84,6 +84,7 @@ export const RequestList = ({
       {reason === 'waiting' && (
         <EmptyState
           title="Waiting for requests"
+          mark={48}
           hint={
             <>
               Send a request to your app and it appears here live. Try{' '}
