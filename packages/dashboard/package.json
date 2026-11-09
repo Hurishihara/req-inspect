@@ -12,9 +12,11 @@
   },
   "devDependencies": {
     "@req-inspect/core": "workspace:*",
+    "@tailwindcss/vite": "4.3.5",
     "@types/react": "18.3.31",
     "@types/react-dom": "18.3.7",
     "@vitejs/plugin-react": "6.2.1",
+    "tailwindcss": "4.3.5",
     "vite": "8.3.5"
   }
 }
