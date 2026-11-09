@@ -14,6 +14,7 @@ import { Button } from '../src/ui/Button'
 import { CodeBlock } from '../src/ui/CodeBlock'
 import { EmptyState } from '../src/ui/EmptyState'
 import { KeyValueList } from '../src/ui/KeyValueList'
+import { Logo } from '../src/ui/Logo'
 import { LiveIndicator } from '../src/ui/LiveIndicator'
 import { SearchField } from '../src/ui/SearchField'
 import { StatusBadge } from '../src/ui/StatusBadge'
@@ -176,6 +177,28 @@ describe('EmptyState', () => {
     const h = renderToStaticMarkup(<EmptyState title="No matches" action={<button>Clear</button>} />)
     expect(h).toContain('No matches')
     expect(h).toContain('<button>Clear</button>')
+  })
+})
+
+describe('Logo', () => {
+  test('full cut is theme-aware', () => {
+    const h = renderToStaticMarkup(<Logo size={48} />)
+    expect(h).toContain('fill-accent')
+    expect(h).toContain('fill-ink')
+    expect(h).toContain('aria-hidden="true"')
+    expect(h).toContain('width="48"')
+    expect(h).not.toMatch(/fill="#/)
+    expect(h).toContain('M56 134C56 92')
+  })
+  test('small cut below 48', () => {
+    const h = renderToStaticMarkup(<Logo size={32} />)
+    expect(h).toContain('M40 212V140')
+    expect(h).not.toContain('M56 134C56 92')
+  })
+  test('EmptyState mark renders before the title', () => {
+    const h = renderToStaticMarkup(<EmptyState title="Hello" mark={48} />)
+    expect(h.indexOf('<svg')).toBeGreaterThanOrEqual(0)
+    expect(h.indexOf('<svg')).toBeLessThan(h.indexOf('Hello'))
   })
 })
 
