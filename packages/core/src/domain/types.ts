@@ -51,7 +51,7 @@ export interface DbRecord {
 export interface DbScope {
   /** Safe to call from any async context, after the query ends. Never throws. Ignored after the response finished. */
   track: (e: DbEventInput) => void
-  /** `performance.now()` value captured when the scope was read; integrations measure from here. */
+  /** `performance.now()` at the moment of the call; integrations measure query start from here. */
   now: () => number
 }
 

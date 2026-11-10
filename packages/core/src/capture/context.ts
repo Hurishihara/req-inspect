@@ -9,9 +9,11 @@ export interface DbSink {
   scope: DbScope
   /** Closes the sink; `undefined` when nothing was tracked. */
   close: () => DbRecord | undefined
+  isClosed: () => boolean
 }
 
 const STATEMENT_MAX = 2048
+const FINGERPRINT_MAX = 2048
 const ERROR_MAX = 500
 const CONTEXT_KEY = Symbol.for('req-inspect.context')
 
@@ -24,6 +26,9 @@ const getAls = (): AsyncLocalStorage<DbSink> => {
   const g = globalThis as ContextHolder
   return (g[CONTEXT_KEY] ??= new AsyncLocalStorage<DbSink>())
 }
+
+// JSON.stringify returns undefined for some inputs despite its declared type.
+const stringify = (v: unknown): string | undefined => JSON.stringify(v)
 
 const round1 = (n: number): number => Math.round(n * 10) / 10
 
@@ -40,9 +45,10 @@ export const createDbSink = (opts: {
   let dropped = 0
   let closed = false
 
-  const track = (e: DbEventInput): void => {
+  const track = (input: DbEventInput): void => {
     if (closed) return
     try {
+      const e = { ...input, fingerprint: capText(input.fingerprint, FINGERPRINT_MAX) }
       const index = tracked++
       intervals.push([e.startMs, e.endMs])
       const seen = counts.get(e.fingerprint)
@@ -52,10 +58,14 @@ export const createDbSink = (opts: {
         dropped++
         return
       }
-      const statement =
-        e.document === undefined
-          ? e.statement
-          : ((JSON.stringify(redactBody(e.document, bodyKeys)) as string | undefined) ?? e.statement)
+      let statement = e.statement
+      if (e.document !== undefined) {
+        try {
+          statement = stringify(redactBody(e.document, bodyKeys)) ?? e.statement
+        } catch {
+          // e.g. a BigInt in the document: keep the plain statement so the event is still stored
+        }
+      }
       events.push({
         system: e.system,
         operation: e.operation,
@@ -77,18 +87,24 @@ export const createDbSink = (opts: {
   const close = (): DbRecord | undefined => {
     closed = true
     if (tracked === 0) return undefined
-    return {
+    const record: DbRecord = {
       events,
       dropped,
       totalMs: unionMs(intervals),
       flags: { repeated: repeatFlags(counts, db.repeatThreshold), slow: slowIndexes(events, db.slowMs) },
     }
+    intervals.length = 0
+    counts.clear()
+    return record
   }
 
-  return { scope: { track, now: () => performance.now() }, close }
+  return { scope: { track, now: () => performance.now() }, close, isClosed: () => closed }
 }
 
 export const runInScope = <T>(sink: DbSink, fn: () => T): T => getAls().run(sink, fn)
 
 /** The current request's DB scope, or `null` outside a request or when the inspector is disabled. */
-export const currentDbScope = (): DbScope | null => getAls().getStore()?.scope ?? null
+export const currentDbScope = (): DbScope | null => {
+  const sink = getAls().getStore()
+  return sink && !sink.isClosed() ? sink.scope : null
+}

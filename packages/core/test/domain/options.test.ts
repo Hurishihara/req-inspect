@@ -61,3 +61,13 @@ test('db options default and merge', () => {
   expect(o.params).toBe(false)
   expect(o.repeatThreshold).toBe(5)
 })
+
+test('db options: explicit undefined falls back, invalid numbers fall back to defaults', () => {
+  expect(resolveOptions({ db: { slowMs: undefined, maxEvents: undefined } }).db).toEqual(DB_DEFAULTS)
+  const bad = resolveOptions({
+    db: { slowMs: Number.NaN, repeatThreshold: -1, maxEvents: 1.5 },
+  }).db
+  expect(bad).toEqual(DB_DEFAULTS)
+  expect(resolveOptions({ db: { maxEvents: Infinity } }).db.maxEvents).toBe(DB_DEFAULTS.maxEvents)
+  expect(resolveOptions({ db: { maxEvents: 0, slowMs: 0 } }).db).toMatchObject({ maxEvents: 0, slowMs: 0 })
+})
