@@ -19,7 +19,7 @@ interface Inspector {
   readonly options: ResolvedOptions
   dispatch: (pathname: string) => 'handle' | 'skip' | 'capture'
   handle: (req: IncomingMessage, res: ServerResponse) => void
-  capture: (req: IncomingMessage, res: ServerResponse, hooks: CaptureHooks) => void
+  capture: (req: IncomingMessage, res: ServerResponse, hooks: CaptureHooks, next?: () => void) => void
 }
 ```
 
@@ -61,6 +61,31 @@ http
 Open `http://localhost:3000/_inspect/` in your browser. Without `auth` it is only reachable from localhost.
 
 See the [root README](https://github.com/Hurishihara/req-inspect#readme) for options, security and known limitations.
+
+## Database calls
+
+`currentDbScope()` returns the `DbScope` of the request being handled, or `null` outside a request or when the inspector is disabled. Integrations call it once when a query starts and `scope.track(event)` when it ends:
+
+```ts
+import { currentDbScope } from '@req-inspect/core'
+
+const scope = currentDbScope()
+if (scope) {
+  const startMs = scope.now()
+  // ... run the query ...
+  scope.track({
+    system: 'postgresql',
+    operation: 'SELECT',
+    target: 'users',
+    statement,
+    startMs,
+    endMs: scope.now(),
+    fingerprint,
+  })
+}
+```
+
+To capture the request's queries, pass `next` as the fourth argument of `capture(req, res, hooks, next)`: it runs inside the request's context. Ready-made integrations: [`@req-inspect/pg`](https://www.npmjs.com/package/@req-inspect/pg) and [`@req-inspect/mongodb`](https://www.npmjs.com/package/@req-inspect/mongodb). The `db` options (`maxEvents`, `params`, `slowMs`, `repeatThreshold`) are described in the root README.
 
 ## Migrating from 0.1
 

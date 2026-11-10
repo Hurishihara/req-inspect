@@ -50,6 +50,77 @@ The inspector must be mounted at the app root, with `app.use(inspector())` befor
 | `ignore`       | `(string \| RegExp)[]`                                    | `[]`                                             | Requests not to capture. A string is a path prefix. Matched against the absolute request path.     |
 | `redact`       | `{ headers?: string[]; bodyKeys?: (string \| RegExp)[] }` | see Security                                     | Extra header names and body keys to redact, added to the defaults.                                 |
 
+## Database calls
+
+Queries made while handling a request are attached to its record and shown in a Queries tab. Records get an `N+1` flag when the same statement runs 5 or more times, a slow flag for queries of 100 ms or more, and the share of the request time spent in the database.
+
+### PostgreSQL
+
+```sh
+npm i @req-inspect/pg
+```
+
+```js
+import pg from 'pg'
+import { instrumentPg } from '@req-inspect/pg'
+
+instrumentPg(pg) // once, at startup
+```
+
+`Client.prototype.query` is wrapped, so `pool.query`, transactions and anything built on `pg` is covered. `pg-native` is not supported.
+
+Drizzle on `pg` needs nothing more:
+
+```js
+import pg from 'pg'
+import { drizzle } from 'drizzle-orm/node-postgres'
+import { instrumentPg } from '@req-inspect/pg'
+
+instrumentPg(pg)
+const db = drizzle(new pg.Pool({ connectionString: process.env.DATABASE_URL }))
+```
+
+Knex, Sequelize and TypeORM work the same way when they use the `pg` driver.
+
+### MongoDB
+
+```sh
+npm i @req-inspect/mongodb
+```
+
+```js
+import { MongoClient } from 'mongodb'
+import { instrumentMongo } from '@req-inspect/mongodb'
+
+const client = new MongoClient(uri, { monitorCommands: true }) // required
+instrumentMongo(client)
+```
+
+With Mongoose:
+
+```js
+import mongoose from 'mongoose'
+import { instrumentMongo } from '@req-inspect/mongodb'
+
+await mongoose.connect(uri, { monitorCommands: true })
+instrumentMongo(mongoose.connection.getClient())
+```
+
+Without `monitorCommands: true` a warning is logged and nothing is recorded.
+
+### Database options
+
+Pass them as `inspector({ db: { ... } })`.
+
+| Option            | Type      | Default | Description                                                                           |
+| ----------------- | --------- | ------- | ------------------------------------------------------------------------------------- |
+| `maxEvents`       | `number`  | `100`   | Events stored per request; further ones are counted as dropped.                       |
+| `params`          | `boolean` | `false` | Store SQL parameter values.                                                           |
+| `slowMs`          | `number`  | `100`   | A query taking at least this many milliseconds is flagged slow.                       |
+| `repeatThreshold` | `number`  | `5`     | A statement seen this many times or more in one request is flagged as repeated (N+1). |
+
+SQL parameters are off by default because positional values cannot be redacted safely. MongoDB command bodies are always redacted with `redact.bodyKeys`.
+
 ## Security
 
 The inspector exposes request data, so it is locked down by default.
