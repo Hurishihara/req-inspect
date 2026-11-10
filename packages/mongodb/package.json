@@ -1,0 +1,58 @@
+{
+  "name": "@req-inspect/mongodb",
+  "version": "0.0.0",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "./dist/index.cjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup"
+  },
+  "dependencies": {
+    "@req-inspect/core": "^0.3.0"
+  },
+  "peerDependencies": {
+    "mongodb": "^6"
+  },
+  "devDependencies": {
+    "mongodb": "^6.10.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Hurishihara/req-inspect.git",
+    "directory": "packages/mongodb"
+  },
+  "homepage": "https://github.com/Hurishihara/req-inspect#readme",
+  "bugs": {
+    "url": "https://github.com/Hurishihara/req-inspect/issues"
+  },
+  "keywords": [
+    "req-inspect",
+    "database",
+    "queries",
+    "debug",
+    "mongodb"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}
