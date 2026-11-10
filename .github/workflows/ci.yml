@@ -73,12 +73,13 @@ jobs:
         env:
           REQ_INSPECT_DB_IT: 1
 
-  # Keeps the previous mongodb driver major (6) covered against the server it targets.
+  # Keeps the previous mongodb driver major (6) covered. Uses mongo:9 because mongo:8 cannot start on
+  # Linux kernel 6.19+ (SERVER-121912), which the ubuntu-latest runner now ships.
   db-integration-mongodb6:
     runs-on: ubuntu-latest
     services:
       mongo:
-        image: mongo:8
+        image: mongo:9
         ports:
           - 27017:27017
     steps:
