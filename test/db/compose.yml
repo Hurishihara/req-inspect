@@ -1,0 +1,20 @@
+# Local databases for the real-database integration suites:
+#   docker compose -f test/db/compose.yml up -d
+#   bun run build && REQ_INSPECT_DB_IT=1 bun run test:db
+#   docker compose -f test/db/compose.yml down
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - '5432:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+  mongo:
+    image: mongo:7
+    ports:
+      - '27017:27017'
