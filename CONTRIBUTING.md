@@ -13,20 +13,27 @@ Build before running the unit tests: one core test loads the built `dist` to che
 
 ## Checks
 
-| Command                | What it does                                              |
-| ---------------------- | --------------------------------------------------------- |
-| `bun run lint`         | ESLint (strict type-checked rules, layer boundaries)      |
-| `bun run format:check` | Prettier check (`bun run format` fixes)                   |
-| `bun run typecheck`    | `tsc` for core, express and dashboard                     |
-| `bun run test`         | Unit tests (needs a prior `bun run build`)                |
-| `bun run test:int`     | Express integration tests (needs a prior `bun run build`) |
-| `bun run check:pkg`    | publint and are-the-types-wrong on the packed packages    |
+| Command                  | What it does                                                                                                      |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| `bun run lint`           | ESLint (strict type-checked rules, layer boundaries)                                                              |
+| `bun run format:check`   | Prettier check (`bun run format` fixes)                                                                           |
+| `bun run typecheck`      | `tsc` for core, express and dashboard                                                                             |
+| `bun run test`           | Unit tests (needs a prior `bun run build`)                                                                        |
+| `bun run test:int`       | Express integration tests (needs a prior `bun run build`)                                                         |
+| `bun run test:db:docker` | Real Postgres and MongoDB tests in throwaway Docker containers (needs Docker running and a prior `bun run build`) |
+| `bun run check:pkg`      | publint and are-the-types-wrong on the packed packages                                                            |
 
 Run the integration tests against both Express versions:
 
 ```sh
 EXPRESS_PKG=express4 bun run test:int
 EXPRESS_PKG=express5 bun run test:int
+```
+
+Run the database tests. The script starts `postgres:16` and `mongo:7` from `test/db/compose.yml`, waits until both are healthy, runs the suites and always removes the containers. Only these tests need Docker; unit and Express tests run directly.
+
+```sh
+bun run test:db:docker
 ```
 
 ## Code style

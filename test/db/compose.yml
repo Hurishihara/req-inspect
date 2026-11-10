@@ -1,7 +1,6 @@
-# Local databases for the real-database integration suites:
-#   docker compose -f test/db/compose.yml up -d
-#   bun run build && REQ_INSPECT_DB_IT=1 bun run test:db
-#   docker compose -f test/db/compose.yml down
+# Local databases for the real-database integration suites. One command does it all:
+#   bun run build && bun run test:db:docker
+# (starts these containers, waits until healthy, runs the suites, always stops them)
 services:
   postgres:
     image: postgres:16
@@ -18,3 +17,8 @@ services:
     image: mongo:7
     ports:
       - '27017:27017'
+    healthcheck:
+      test: ['CMD', 'mongosh', '--quiet', '--eval', 'db.adminCommand({ ping: 1 }).ok']
+      interval: 5s
+      timeout: 5s
+      retries: 10
