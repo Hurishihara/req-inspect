@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 
-const dirs = ['packages/core', 'packages/express', 'packages/pg']
+const dirs = ['packages/core', 'packages/express', 'packages/pg', 'packages/mongodb']
 const fields = ['dependencies', 'peerDependencies', 'optionalDependencies']
 let bad = 0
 for (const dir of dirs) {
