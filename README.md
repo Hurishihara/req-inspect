@@ -54,6 +54,10 @@ The inspector must be mounted at the app root, with `app.use(inspector())` befor
 
 Queries made while handling a request are attached to its record and shown in a Queries tab. Records get an `N+1` flag when the same statement runs 5 or more times, a slow flag for queries of 100 ms or more, and the share of the request time spent in the database.
 
+req-inspect warns once in the console when two incompatible `@req-inspect/core` copies share the request context, so database calls may go unrecorded. Update all `@req-inspect` packages to one version.
+
+It also warns once when 20 or more pg or MongoDB queries over at least 30 seconds never ran inside an inspected request, for example with an outdated `@req-inspect/express` or `inspector()` mounted after your routes.
+
 ### PostgreSQL
 
 ```sh
