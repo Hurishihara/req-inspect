@@ -15,7 +15,9 @@ const makeClient = () => {
   class Client {
     query(...args: unknown[]): unknown {
       calls.push(args)
-      const cb = typeof args.at(-1) === 'function' ? (args.at(-1) as (...a: unknown[]) => void) : undefined
+      const cfgCb = (args[0] as { callback?: unknown } | null)?.callback
+      const cb = (typeof args.at(-1) === 'function' ? args.at(-1) : cfgCb) as
+        ((...a: unknown[]) => void) | undefined
       const first = args[0]
       if (typeof first === 'object' && first !== null && 'submit' in first) return first
       const text = typeof first === 'string' ? first : (first as { text: string }).text
@@ -55,15 +57,31 @@ describe('promise forms', () => {
     ])
   })
 
-  test('returns a promise to the caller', async () => {
-    const { client } = makeClient()
-    let seen: unknown
+  test('resolves with the identical value', async () => {
+    const result = { rowCount: 3 }
+    class C {
+      query(): unknown {
+        return Promise.resolve(result)
+      }
+    }
+    instrumentPg({ Client: C })
+    let got: unknown
     await inRequest(async () => {
-      const p = client.query('select 1')
-      seen = p
-      await p
+      got = await new C().query()
     })
-    expect(seen).toBeInstanceOf(Promise)
+    expect(got).toBe(result)
+  })
+
+  test('an ignored rejection still surfaces as an unhandled rejection', async () => {
+    const proc = Bun.spawn([process.execPath, 'test/fixtures/ignored-rejection.ts'], {
+      cwd: import.meta.dir + '/..',
+      stdout: 'pipe',
+      stderr: 'pipe',
+    })
+    const out = await new Response(proc.stdout).text()
+    await proc.exited
+    expect(out).toContain('UNHANDLED same-error')
+    expect(out).toContain('events 1 boom')
   })
 
   test('rejection: event has error, caller sees the same error object', async () => {
@@ -94,6 +112,26 @@ describe('promise forms', () => {
 })
 
 describe('callback form', () => {
+  test('callback inside the config object is tracked once and the config is not mutated', async () => {
+    const { client, calls } = makeClient()
+    let called = 0
+    const config = {
+      text: 'select * from t',
+      callback: () => {
+        called++
+      },
+    }
+    const events = await inRequest(async () => {
+      client.query(config)
+      await new Promise((r) => setTimeout(r, 20))
+    })
+    expect(called).toBe(1)
+    expect(events).toHaveLength(1)
+    expect(events[0]).toMatchObject({ operation: 'SELECT', target: 't', rows: 3 })
+    expect(calls).toHaveLength(1)
+    expect(config.callback).toBeInstanceOf(Function)
+  })
+
   test('records rows and calls the callback with the original arguments', async () => {
     const { client } = makeClient()
     let args: unknown[] = []

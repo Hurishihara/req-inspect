@@ -112,11 +112,19 @@ export const instrumentMongo = (client: MongoClientLike): void => {
     }
 
     client.on('commandSucceeded', (e: SucceededEvent) => {
-      const rows = rowsOf(e.reply)
-      finish(e.requestId, rows === undefined ? {} : { rows })
+      try {
+        const rows = rowsOf(e.reply)
+        finish(e.requestId, rows === undefined ? {} : { rows })
+      } catch {
+        // never let instrumentation reach the driver
+      }
     })
     client.on('commandFailed', (e: FailedEvent) => {
-      finish(e.requestId, { error: messageOf(e.failure) })
+      try {
+        finish(e.requestId, { error: messageOf(e.failure) })
+      } catch {
+        // never let instrumentation reach the driver
+      }
     })
   } catch (err) {
     console.warn('req-inspect: could not instrument mongodb:', err)
