@@ -42,13 +42,15 @@ export const RequestRow = ({
       {formatDuration(item.durationMs)}
     </span>
     <span className="truncate text-caption tabular-nums">
-      {item.dbCount !== undefined && (
-        <span className="text-ink-muted">{dbCaption(item.dbCount, item.dbMs ?? 0)}</span>
-      )}
       {item.dbFlag !== undefined && (
-        <span className="ml-1 inline-flex items-center gap-0.5 text-status-4xx">
+        <span className="inline-flex items-center gap-0.5 text-status-4xx">
           <Icon name="warn" />
           {item.dbFlag === 'repeated' ? 'N+1' : 'slow'}
+        </span>
+      )}
+      {item.dbCount !== undefined && (
+        <span className={`text-ink-muted ${item.dbFlag !== undefined ? 'ml-1' : ''}`}>
+          {dbCaption(item.dbCount, item.dbMs ?? 0)}
         </span>
       )}
     </span>

@@ -339,6 +339,12 @@ describe('database calls', () => {
     const flagged = row({ dbCount: 8, dbMs: 42, dbFlag: 'repeated' })
     expect(flagged).toContain('N+1')
     expect(flagged).toContain('text-status-4xx')
+    expect(flagged.indexOf('N+1')).toBeLessThan(flagged.indexOf('8 q · 42 ms'))
+    const slowRow = row({ dbCount: 2, dbMs: 300, dbFlag: 'slow' })
+    expect(slowRow).toContain('slow')
+    expect(slowRow).toContain('text-status-4xx')
+    expect(slowRow).not.toContain('N+1')
+    expect(slowRow.indexOf('slow<')).toBeLessThan(slowRow.indexOf('2 q · 300 ms'))
     expect(row({})).not.toContain(' q · ')
   })
   test('queries panel', () => {
