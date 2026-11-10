@@ -1,4 +1,4 @@
-export { createInspector, currentDbScope } from './inspector.js'
+export { createInspector, currentDbScope, watchDbContext } from './inspector.js'
 export type { Inspector } from './inspector.js'
 export type {
   CaptureHooks,

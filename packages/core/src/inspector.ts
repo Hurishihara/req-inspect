@@ -20,6 +20,7 @@ import { RingStore } from './store/ring-store.js'
 import { warnOnce } from './support/warn.js'
 
 export { currentDbScope } from './capture/context.js'
+export { watchDbContext } from './capture/watch.js'
 
 export interface Inspector {
   /** Frozen, read-only view of the resolved options. */

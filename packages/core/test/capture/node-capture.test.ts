@@ -311,3 +311,13 @@ test('next is still called once when setup fails', () => {
   warn.mockRestore()
   expect(calls).toBe(1)
 })
+
+test('requestsSeen increments once per captured request', async () => {
+  const KEY = Symbol.for('req-inspect.context')
+  const before = (globalThis as unknown as Record<symbol, { requestsSeen?: number } | undefined>)[KEY]
+  const start = before?.requestsSeen ?? 0
+  await run({ respond: (_req, res) => res.end('x') })
+  await run({ respond: (_req, res) => res.end('y') })
+  const slot = (globalThis as unknown as Record<symbol, { requestsSeen: number }>)[KEY]
+  expect(slot.requestsSeen).toBe(start + 2)
+})

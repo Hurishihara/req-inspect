@@ -1,6 +1,6 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
 
-import { createDbSink, runInScope } from './context.js'
+import { createDbSink, noteRequest, runInScope } from './context.js'
 import { captureParsedBody, captureRawBody } from '../domain/body.js'
 import { normalizeHeaders, redactBody } from '../domain/redact.js'
 import type { CaptureHooks, CapturedBody, DbOptions, RecordDraft } from '../domain/types.js'
@@ -133,6 +133,7 @@ export const createNodeCapture = (deps: NodeCaptureDeps) => {
     }
 
     try {
+      noteRequest()
       install()
     } catch (err) {
       warnOnce('capture', err)

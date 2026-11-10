@@ -17,15 +17,69 @@ const FINGERPRINT_MAX = 2048
 const ERROR_MAX = 500
 const CONTEXT_KEY = Symbol.for('req-inspect.context')
 
-interface ContextHolder {
-  [CONTEXT_KEY]?: AsyncLocalStorage<DbSink>
+export const CONTEXT_VERSION = 1
+
+interface ContextSlot {
+  version: number
+  storage: AsyncLocalStorage<DbSink>
+  requestsSeen: number
 }
 
-// Shared through globalThis so a second copy of core in node_modules reuses the same storage.
-const getAls = (): AsyncLocalStorage<DbSink> => {
-  const g = globalThis as ContextHolder
-  return (g[CONTEXT_KEY] ??= new AsyncLocalStorage<DbSink>())
+interface ContextHolder {
+  [CONTEXT_KEY]?: unknown
 }
+
+let privateSlot: ContextSlot | undefined
+let warnedIncompatible = false
+
+/** Test hook: forget the module-local slot and the one-time warning. */
+export const resetContextState = (): void => {
+  privateSlot = undefined
+  warnedIncompatible = false
+}
+
+const isSlot = (v: unknown): v is ContextSlot =>
+  typeof v === 'object' && v !== null && typeof (v as { version?: unknown }).version === 'number'
+
+const newSlot = (storage = new AsyncLocalStorage<DbSink>()): ContextSlot => ({
+  version: CONTEXT_VERSION,
+  storage,
+  requestsSeen: 0,
+})
+
+// Shared through globalThis so a second copy of core in node_modules reuses the same storage.
+const getSlot = (): ContextSlot => {
+  const g = globalThis as ContextHolder
+  const found = g[CONTEXT_KEY]
+  if (found === undefined) return (g[CONTEXT_KEY] = newSlot())
+  // core 0.4.0 stored a bare, unlabelled AsyncLocalStorage: that is format 1. Wrap the same instance so
+  // copies that already hold it stay shared with this one.
+  if (found instanceof AsyncLocalStorage)
+    return (g[CONTEXT_KEY] = newSlot(found as AsyncLocalStorage<DbSink>))
+  if (isSlot(found) && found.version === CONTEXT_VERSION) return found
+  if (!warnedIncompatible) {
+    warnedIncompatible = true
+    const theirs = isSlot(found) ? String(found.version) : 'unknown'
+    console.warn(
+      `req-inspect: two incompatible versions of @req-inspect/core are installed (context format ${theirs} and ${String(CONTEXT_VERSION)}). Database calls may not be recorded. Run \`npm update @req-inspect\` so all packages use one version.`,
+    )
+  }
+  return (privateSlot ??= newSlot())
+}
+
+/** Counts one captured request in the slot. */
+export const noteRequest = (): void => {
+  getSlot().requestsSeen++
+}
+
+/** Requests captured so far, read without creating the slot; 0 when there is none. */
+export const peekRequestsSeen = (): number => {
+  const found = (globalThis as ContextHolder)[CONTEXT_KEY]
+  if (isSlot(found) && found.version === CONTEXT_VERSION) return found.requestsSeen
+  return privateSlot?.requestsSeen ?? 0
+}
+
+const getAls = (): AsyncLocalStorage<DbSink> => getSlot().storage
 
 // JSON.stringify returns undefined for some inputs despite its declared type.
 const stringify = (v: unknown): string | undefined => JSON.stringify(v)

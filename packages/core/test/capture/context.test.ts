@@ -1,8 +1,16 @@
 import { AsyncLocalStorage } from 'node:async_hooks'
 
-import { expect, test } from 'bun:test'
+import { afterEach, beforeEach, describe, expect, jest, spyOn, test } from 'bun:test'
 
-import { createDbSink, currentDbScope, runInScope } from '../../src/capture/context.js'
+import {
+  createDbSink,
+  currentDbScope,
+  noteRequest,
+  peekRequestsSeen,
+  resetContextState,
+  runInScope,
+  type DbSink,
+} from '../../src/capture/context.js'
 import { DB_DEFAULTS } from '../../src/domain/db.js'
 import type { DbEventInput, DbOptions } from '../../src/domain/types.js'
 
@@ -72,7 +80,8 @@ test('parallel scopes are isolated', async () => {
 test('the storage is shared through a global symbol', () => {
   runInScope(sink(), () => undefined)
   const als = (globalThis as unknown as Record<symbol, unknown>)[Symbol.for('req-inspect.context')]
-  expect(als).toBeInstanceOf(AsyncLocalStorage)
+  expect(als).toMatchObject({ version: 1, requestsSeen: expect.any(Number) })
+  expect((als as { storage: unknown }).storage).toBeInstanceOf(AsyncLocalStorage)
 })
 
 test('1000 identical tracks: 100 stored, 900 dropped, true repeat count', () => {
@@ -150,5 +159,59 @@ test('the scope is null once the sink is closed', async () => {
     s.close()
     await Promise.resolve()
     expect(currentDbScope()).toBeNull()
+  })
+})
+
+describe('shared slot versioning', () => {
+  const KEY = Symbol.for('req-inspect.context')
+  const g = globalThis as unknown as Record<symbol, unknown>
+  let saved: unknown
+  beforeEach(() => {
+    saved = g[KEY]
+    Reflect.deleteProperty(g, KEY)
+    resetContextState()
+  })
+  afterEach(() => {
+    if (saved === undefined) Reflect.deleteProperty(g, KEY)
+    else g[KEY] = saved
+    resetContextState()
+    jest.restoreAllMocks()
+  })
+
+  test('an unlabelled bare AsyncLocalStorage is accepted and shared both ways', () => {
+    const bare = new AsyncLocalStorage<DbSink>()
+    g[KEY] = bare
+    const a = sink()
+    bare.run(a, () => {
+      expect(currentDbScope()).toBe(a.scope)
+    })
+    const b = sink()
+    runInScope(b, () => {
+      expect(bare.getStore()).toBe(b)
+    })
+    expect(g[KEY]).toMatchObject({ version: 1, storage: bare })
+  })
+
+  test('a slot with another version warns once and keeps a private slot', () => {
+    const theirs = { version: 2, storage: new AsyncLocalStorage<DbSink>(), requestsSeen: 0 }
+    g[KEY] = theirs
+    const warn = spyOn(console, 'warn').mockImplementation(() => undefined)
+    const s = sink()
+    runInScope(s, () => {
+      expect(currentDbScope()).toBe(s.scope)
+    })
+    runInScope(s, () => undefined)
+    expect(warn).toHaveBeenCalledTimes(1)
+    expect(String(warn.mock.calls[0]?.[0])).toContain('context format 2 and 1')
+    expect(g[KEY]).toBe(theirs)
+    expect(theirs.storage.getStore()).toBeUndefined()
+  })
+
+  test('noteRequest counts and peek does not create the slot', () => {
+    expect(peekRequestsSeen()).toBe(0)
+    expect(g[KEY]).toBeUndefined()
+    noteRequest()
+    noteRequest()
+    expect(peekRequestsSeen()).toBe(2)
   })
 })
