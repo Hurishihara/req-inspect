@@ -31,6 +31,6 @@ For each command: its name, the collection, the command body (redacted with the 
 ## Limitations
 
 - `monitorCommands: true` is required. Without it a warning is logged and nothing is recorded.
-- Only the Node.js `mongodb` driver (and Mongoose on top of it) is covered.
+- Supports the Node.js `mongodb` driver 6 and 7, and Mongoose 8 and 9 on top of it. Driver 7 needs Node.js 20.19 or later.
 
 See the [root README](https://github.com/Hurishihara/req-inspect#database-calls) for options and security.

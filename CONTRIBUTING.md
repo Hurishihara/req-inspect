@@ -30,7 +30,7 @@ EXPRESS_PKG=express4 bun run test:int
 EXPRESS_PKG=express5 bun run test:int
 ```
 
-Run the database tests. The script starts `postgres:16` and `mongo:7` from `test/db/compose.yml`, waits until both are healthy, runs the suites and always removes the containers. Only these tests need Docker; unit and Express tests run directly.
+Run the database tests. The script starts `postgres:18` and `mongo:9` from `test/db/compose.yml`, waits until both are healthy, runs the suites and always removes the containers. Only these tests need Docker; unit and Express tests run directly.
 
 ```sh
 bun run test:db:docker
