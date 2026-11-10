@@ -36,7 +36,7 @@ export const Tabs = ({
   return (
     <div className="flex h-toolbar shrink-0 items-center gap-1 border-b border-border bg-surface px-2">
       {leading}
-      <div role="tablist" className="flex h-full gap-1">
+      <div role="tablist" className="flex h-full min-w-0 gap-1 overflow-x-auto">
         {tabs.map((t, i) => {
           const selected = t.id === value
           return (
@@ -55,7 +55,7 @@ export const Tabs = ({
                 onChange(t.id)
               }}
               onKeyDown={onKeyDown}
-              className={`h-full border-b-2 px-3 transition-colors duration-[120ms] ${
+              className={`h-full shrink-0 border-b-2 px-3 transition-colors duration-[120ms] ${
                 selected
                   ? 'border-accent font-semibold text-ink'
                   : 'border-transparent text-ink-muted hover:text-ink'

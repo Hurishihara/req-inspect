@@ -26,7 +26,7 @@ export const RequestRow = ({
     aria-selected={selected}
     tabIndex={focusable ? 0 : -1}
     onClick={onSelect}
-    className={`grid min-h-row w-full grid-cols-[56px_minmax(0,1fr)_44px_56px_88px_72px] items-center gap-2 border-b border-border px-3 py-1 text-left hover:bg-hover ${
+    className={`grid min-h-row w-full grid-cols-[56px_minmax(0,1fr)_44px_56px_120px_72px] items-center gap-2 border-b border-border px-3 py-1 text-left hover:bg-hover ${
       selected ? 'bg-selected' : ''
     }`}
   >
