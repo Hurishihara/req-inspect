@@ -1,0 +1,61 @@
+{
+  "name": "@req-inspect/pg",
+  "version": "0.0.0",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "./dist/index.cjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup"
+  },
+  "dependencies": {
+    "@req-inspect/core": "^0.3.0"
+  },
+  "peerDependencies": {
+    "pg": "^8"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.11.0",
+    "pg": "^8.13.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Hurishihara/req-inspect.git",
+    "directory": "packages/pg"
+  },
+  "homepage": "https://github.com/Hurishihara/req-inspect#readme",
+  "bugs": {
+    "url": "https://github.com/Hurishihara/req-inspect/issues"
+  },
+  "keywords": [
+    "req-inspect",
+    "database",
+    "queries",
+    "debug",
+    "pg",
+    "postgres",
+    "node-postgres"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}
