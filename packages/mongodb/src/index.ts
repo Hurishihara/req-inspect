@@ -75,16 +75,25 @@ export const instrumentMongo = (client: MongoClientLike): void => {
         if (!scope) return
         const target = targetOf(e.commandName, e.command)
         const document = commandDocument(e.command)
-        const filter = document.filter ?? document.query ?? document.pipeline
-        const documents = document.documents
-        const first = Array.isArray(documents) ? (documents as unknown[])[0] : undefined
+        const firstOf = (v: unknown): unknown => (Array.isArray(v) ? (v as unknown[])[0] : undefined)
+        const firstQuery = (v: unknown): unknown => {
+          const item = firstOf(v)
+          return typeof item === 'object' && item !== null ? (item as { q?: unknown }).q : undefined
+        }
+        const filter =
+          document.filter ??
+          document.query ??
+          firstQuery(document.updates) ??
+          firstQuery(document.deletes) ??
+          document.pipeline ??
+          firstOf(document.documents)
         pending.set(e.requestId, {
           scope,
           startMs: scope.now(),
           operation: e.commandName,
           target,
           document,
-          fingerprint: `${e.commandName} ${target ?? ''} ${keyShape(filter ?? first ?? {})}`,
+          fingerprint: `${e.commandName} ${target ?? ''} ${keyShape(filter ?? {})}`,
         })
       } catch {
         // never let instrumentation reach the app
