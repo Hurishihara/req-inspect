@@ -1,8 +1,12 @@
-export { createInspector } from './inspector.js'
+export { createInspector, currentDbScope } from './inspector.js'
 export type { Inspector } from './inspector.js'
 export type {
   CaptureHooks,
   CapturedBody,
+  DbEvent,
+  DbEventInput,
+  DbOptions,
+  DbScope,
   InspectorOptions,
   RequestRecord,
   RequestSummary,

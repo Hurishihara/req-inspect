@@ -4,7 +4,9 @@ import type { AddressInfo } from 'node:net'
 
 import { afterEach, expect, spyOn, test } from 'bun:test'
 
+import { currentDbScope } from '../../src/capture/context.js'
 import { createNodeCapture } from '../../src/capture/node-capture.js'
+import { DB_DEFAULTS } from '../../src/domain/db.js'
 import type { CaptureHooks, RecordDraft } from '../../src/domain/types.js'
 
 const servers: Server[] = []
@@ -26,17 +28,26 @@ const run = async (opts: {
   path?: string
   reqHeaders?: Record<string, string>
   install?: boolean
+  withNext?: boolean
   respond: (req: IncomingMessage, res: ServerResponse) => void
 }): Promise<{ drafts: RecordDraft[]; status: number; body: string }> => {
   const drafts: RecordDraft[] = []
   const capture = createNodeCapture({
     maxBodyBytes: opts.maxBodyBytes ?? 1024,
     bodyKeys: ['password'],
+    db: { ...DB_DEFAULTS },
     record: (d) => drafts.push(d),
   })
   const server = createServer((req, res) => {
-    if (opts.install !== false) capture(req, res, { ...baseHooks, ...opts.hooks })
-    opts.respond(req, res)
+    const respond = (): void => {
+      opts.respond(req, res)
+    }
+    if (opts.install === false) respond()
+    else if (opts.withNext) capture(req, res, { ...baseHooks, ...opts.hooks }, respond)
+    else {
+      capture(req, res, { ...baseHooks, ...opts.hooks })
+      respond()
+    }
   })
   await new Promise<void>((r) => server.listen(0, '127.0.0.1', r))
   servers.push(server)
@@ -199,7 +210,12 @@ test('body hook value is redacted before truncation', async () => {
 test('capture never throws when its setup fails and leaves the response untouched', async () => {
   const warn = spyOn(console, 'warn').mockImplementation(() => undefined)
   const drafts: RecordDraft[] = []
-  const capture = createNodeCapture({ maxBodyBytes: 1024, bodyKeys: [], record: (d) => drafts.push(d) })
+  const capture = createNodeCapture({
+    maxBodyBytes: 1024,
+    bodyKeys: [],
+    db: { ...DB_DEFAULTS },
+    record: (d) => drafts.push(d),
+  })
   let threw: unknown
   let untouched = false
   const server = createServer((req, res) => {
@@ -224,4 +240,74 @@ test('capture never throws when its setup fails and leaves the response untouche
   expect(threw).toBeUndefined()
   expect(untouched).toBe(true)
   warn.mockRestore()
+})
+
+const track = (): void => {
+  currentDbScope()?.track({
+    system: 'postgresql',
+    operation: 'SELECT',
+    target: null,
+    statement: 'select 1',
+    startMs: performance.now() - 1,
+    endMs: performance.now(),
+    fingerprint: 'select ?',
+  })
+}
+
+test('with next, db events tracked in the handler land on the record', async () => {
+  const { drafts } = await run({
+    withNext: true,
+    respond: (_req, res) => {
+      track()
+      track()
+      res.end('ok')
+    },
+  })
+  expect(drafts[0]?.db?.events).toHaveLength(2)
+})
+
+test('without next there is no db context or db field', async () => {
+  let scope: unknown = 'unset'
+  const { drafts } = await run({
+    respond: (_req, res) => {
+      scope = currentDbScope()
+      res.end('ok')
+    },
+  })
+  expect(scope).toBeNull()
+  expect(drafts[0]).not.toHaveProperty('db')
+})
+
+test('a track after the response finished is not on the record', async () => {
+  const { drafts } = await run({
+    withNext: true,
+    respond: (_req, res) => {
+      track()
+      res.end('ok')
+      setTimeout(track, 30)
+    },
+  })
+  await new Promise((r) => setTimeout(r, 60))
+  expect(drafts[0]?.db?.events).toHaveLength(1)
+})
+
+test('next is still called once when setup fails', () => {
+  let calls = 0
+  const capture = createNodeCapture({
+    maxBodyBytes: 10,
+    bodyKeys: [],
+    db: { ...DB_DEFAULTS },
+    record: () => undefined,
+  })
+  const warn = spyOn(console, 'warn').mockImplementation(() => undefined)
+  const res = {
+    once: () => {
+      throw new Error('boom')
+    },
+  } as unknown as ServerResponse
+  capture({ headers: {} } as IncomingMessage, res, baseHooks, () => {
+    calls++
+  })
+  warn.mockRestore()
+  expect(calls).toBe(1)
 })
