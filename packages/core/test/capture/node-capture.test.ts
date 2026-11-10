@@ -313,7 +313,7 @@ test('next is still called once when setup fails', () => {
 })
 
 test('requestsSeen increments once per captured request', async () => {
-  const KEY = Symbol.for('req-inspect.context')
+  const KEY = Symbol.for('req-inspect.context.meta')
   const before = (globalThis as unknown as Record<symbol, { requestsSeen?: number } | undefined>)[KEY]
   const start = before?.requestsSeen ?? 0
   await run({ respond: (_req, res) => res.end('x') })

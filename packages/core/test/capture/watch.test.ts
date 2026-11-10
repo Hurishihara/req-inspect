@@ -3,7 +3,7 @@ import { afterEach, beforeEach, expect, jest, spyOn, test } from 'bun:test'
 import { noteRequest, resetContextState } from '../../src/capture/context.js'
 import { resetWatchState, watchDbContext } from '../../src/capture/watch.js'
 
-const KEY = Symbol.for('req-inspect.context')
+const KEY = Symbol.for('req-inspect.context.meta')
 const g = globalThis as unknown as Record<symbol, unknown>
 let saved: unknown
 let now = 1_000_000
