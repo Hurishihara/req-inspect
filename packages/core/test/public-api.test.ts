@@ -12,16 +12,16 @@ const loadCjs = (): Record<string, unknown> =>
 
 type CreateInspector = (options: object) => Record<string, (...args: never[]) => unknown>
 
-test('ESM entry exports only createInspector', async () => {
-  expect(Object.keys(await loadEsm()).sort()).toEqual(['createInspector'])
+test('ESM entry exports only createInspector and currentDbScope', async () => {
+  expect(Object.keys(await loadEsm()).sort()).toEqual(['createInspector', 'currentDbScope'])
 })
 
-test('CJS entry exports only createInspector', () => {
+test('CJS entry exports only createInspector and currentDbScope', () => {
   expect(
     Object.keys(loadCjs())
       .filter((k) => k !== '__esModule')
       .sort(),
-  ).toEqual(['createInspector'])
+  ).toEqual(['createInspector', 'currentDbScope'])
 })
 
 test('inspector object exposes only the public members', async () => {

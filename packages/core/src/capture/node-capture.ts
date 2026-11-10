@@ -1,22 +1,25 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
 
+import { createDbSink, runInScope } from './context.js'
 import { captureParsedBody, captureRawBody } from '../domain/body.js'
 import { normalizeHeaders, redactBody } from '../domain/redact.js'
-import type { CaptureHooks, CapturedBody, RecordDraft } from '../domain/types.js'
+import type { CaptureHooks, CapturedBody, DbOptions, RecordDraft } from '../domain/types.js'
 import { warnOnce } from '../support/warn.js'
 
 interface NodeCaptureDeps {
   maxBodyBytes: number
   bodyKeys: (string | RegExp)[]
+  db: Required<DbOptions>
   record: (draft: RecordDraft) => void
 }
 
 export const createNodeCapture = (deps: NodeCaptureDeps) => {
-  const { maxBodyBytes: max, bodyKeys, record } = deps
+  const { maxBodyBytes: max, bodyKeys, db, record } = deps
 
-  return (req: IncomingMessage, res: ServerResponse, hooks: CaptureHooks): void => {
+  return (req: IncomingMessage, res: ServerResponse, hooks: CaptureHooks, next?: () => void): void => {
     const startedAt = Date.now()
     const t0 = performance.now()
+    const sink = createDbSink({ db, bodyKeys, t0 })
     const chunks: Buffer[] = []
     let kept = 0
     let total = 0
@@ -60,6 +63,7 @@ export const createNodeCapture = (deps: NodeCaptureDeps) => {
     const finalize = (aborted: boolean): void => {
       if (done) return
       done = true
+      const dbRecord = sink.close()
       try {
         const captured = snapshot()
         const reqBody = captureParsedBody(
@@ -93,6 +97,7 @@ export const createNodeCapture = (deps: NodeCaptureDeps) => {
             body: reqBody.kind === 'binary' && reqBody.size === 0 ? { kind: 'none' } : reqBody,
           },
           response: { headers: normalizeHeaders(res.getHeaders()), body: resBody },
+          ...(dbRecord ? { db: dbRecord } : {}),
         })
       } catch (err) {
         warnOnce('capture', err)
@@ -132,5 +137,6 @@ export const createNodeCapture = (deps: NodeCaptureDeps) => {
     } catch (err) {
       warnOnce('capture', err)
     }
+    if (next) runInScope(sink, next)
   }
 }

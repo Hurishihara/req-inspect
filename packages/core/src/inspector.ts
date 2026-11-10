@@ -19,6 +19,8 @@ import { createHandler } from './server/handler.js'
 import { RingStore } from './store/ring-store.js'
 import { warnOnce } from './support/warn.js'
 
+export { currentDbScope } from './capture/context.js'
+
 export interface Inspector {
   /** Frozen, read-only view of the resolved options. */
   readonly options: ResolvedOptions
@@ -34,10 +36,11 @@ export interface Inspector {
   handle: (req: IncomingMessage, res: ServerResponse) => void
   /**
    * Starts capturing a request that `dispatch` answered `'capture'`: wraps `res.write` and `res.end` and
-   * stores a redacted record when the response finishes or closes. Never throws; a failure warns once and
+   * stores a redacted record when the response finishes or closes. When `next` is given it is called
+   * exactly once, inside the request's DB context (see `currentDbScope`). Never throws; a failure warns once and
    * leaves the response unaffected. Does nothing when the inspector is disabled.
    */
-  capture: (req: IncomingMessage, res: ServerResponse, hooks: CaptureHooks) => void
+  capture: (req: IncomingMessage, res: ServerResponse, hooks: CaptureHooks, next?: () => void) => void
 }
 
 export interface InspectorInternals extends Inspector {
@@ -89,8 +92,10 @@ export const createInspectorInternals = (
       return shouldIgnore(p) ? 'skip' : 'capture'
     },
     capture: opts.enabled
-      ? createNodeCapture({ maxBodyBytes: opts.maxBodyBytes, bodyKeys: keys, record })
-      : () => undefined,
+      ? createNodeCapture({ maxBodyBytes: opts.maxBodyBytes, bodyKeys: keys, db: opts.db, record })
+      : (_req, _res, _hooks, next) => {
+          next?.()
+        },
   }
 }
 
