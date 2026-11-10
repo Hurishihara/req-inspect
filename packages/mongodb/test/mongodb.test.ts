@@ -184,3 +184,13 @@ test('a real MongoClient satisfies MongoClientLike', () => {
   const accepts: (c: MongoClientLike) => void = () => undefined
   accepts(new MongoClient('mongodb://127.0.0.1:1', { monitorCommands: true }))
 })
+
+test('updates with different filters on one collection get different fingerprints', async () => {
+  const client = instrumented()
+  const events = await inRequest(async () => {
+    await command(client, 'update', { updates: [{ q: { a: 1 }, u: {} }] }, { ok: true, reply: { n: 1 } })
+    await command(client, 'update', { updates: [{ q: { b: 1 }, u: {} }] }, { ok: true, reply: { n: 1 } })
+  })
+  expect(events).toHaveLength(2)
+  expect(events[0]?.fingerprint).not.toBe(events[1]?.fingerprint)
+})
