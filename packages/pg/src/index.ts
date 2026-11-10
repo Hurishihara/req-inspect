@@ -1,3 +1,5 @@
+import { AsyncResource } from 'node:async_hooks'
+
 import { currentDbScope, type DbEventInput, type DbScope } from '@req-inspect/core'
 
 import { sqlFingerprint, sqlOperation, sqlTarget } from './sql.js'
@@ -6,6 +8,7 @@ type QueryFn = (...args: unknown[]) => unknown
 
 export interface PgLike {
   Client: { prototype: { query: (...args: unknown[]) => unknown } }
+  Pool?: { prototype: { connect?: (...args: unknown[]) => unknown } }
 }
 
 interface Emitter {
@@ -88,13 +91,16 @@ const wrap = (original: QueryFn): QueryFn =>
     }
 
     const last = args.length - 1
-    const wrapCallback =
-      (callback: QueryFn) =>
-      (...cbArgs: unknown[]): unknown => {
+    // pg runs callbacks in the socket's async context; bind the user's callback to the request's context
+    // and keep pg's own `this`.
+    const wrapCallback = (callback: QueryFn) => {
+      const bound = AsyncResource.bind(callback)
+      return function (this: unknown, ...cbArgs: unknown[]): unknown {
         const [err, result] = cbArgs
         record(err ? { error: messageOf(err) } : { rows: rowsOf(result) })
-        return callback.apply(this, cbArgs)
+        return bound.apply(this, cbArgs)
       }
+    }
     let hasCallback = false
     const trailing = args[last]
     if (typeof trailing === 'function') {
@@ -148,6 +154,19 @@ const wrap = (original: QueryFn): QueryFn =>
     return result
   }
 
+/** pg-pool runs a queued waiter's connect callback in the releasing client's context; bind it to the caller's. */
+const wrapConnect = (original: QueryFn): QueryFn =>
+  function (this: unknown, ...args: unknown[]): unknown {
+    try {
+      const last = args.length - 1
+      const cb = args[last]
+      if (typeof cb === 'function') args[last] = AsyncResource.bind(cb as QueryFn)
+    } catch {
+      // never let instrumentation reach the app
+    }
+    return original.apply(this, args)
+  }
+
 /** Records every `pg.Client#query` made inside a request on that request's record. Safe to call twice. */
 export const instrumentPg = (pg: PgLike): void => {
   try {
@@ -157,5 +176,13 @@ export const instrumentPg = (pg: PgLike): void => {
     proto.query = wrap(proto.query)
   } catch (err) {
     console.warn('req-inspect: could not instrument pg:', err)
+  }
+  try {
+    const poolProto = pg.Pool?.prototype as (Record<symbol, unknown> & { connect?: QueryFn }) | undefined
+    if (!poolProto || poolProto[MARKER] || typeof poolProto.connect !== 'function') return
+    Object.defineProperty(poolProto, MARKER, { value: true })
+    poolProto.connect = wrapConnect(poolProto.connect)
+  } catch (err) {
+    console.warn('req-inspect: could not instrument pg.Pool:', err)
   }
 }
