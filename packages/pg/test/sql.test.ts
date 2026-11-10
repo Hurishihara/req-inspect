@@ -10,7 +10,8 @@ test('sqlOperation is the first keyword, uppercased', () => {
 })
 
 test('sqlTarget finds the first identifier after from/into/update/join', () => {
-  expect(sqlTarget('select * from "public"."users" u')).toBe('"public"."users"')
+  expect(sqlTarget('select * from "public"."users" u')).toBe('public.users')
+  expect(sqlTarget('select * from "users"')).toBe('users')
   expect(sqlTarget('insert into orders (a) values ($1)')).toBe('orders')
   expect(sqlTarget('update items set a=1')).toBe('items')
   expect(sqlTarget('select 1 from a join b on a.id = b.id')).toBe('a')

@@ -76,6 +76,7 @@ test('native insertOne and find are recorded with targets and rows', { skip }, a
 })
 
 test('a password field in a written document is redacted', { skip }, async () => {
+  await fetch(`${server.base}/native`)
   const rec = await record('/native')
   const text = JSON.stringify(rec.db.events)
   assert.doesNotMatch(text, /hunter2/)
