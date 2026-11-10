@@ -354,6 +354,8 @@ describe('database calls', () => {
     expect(slowRow).toContain('text-status-4xx')
     expect(slowRow).not.toContain('N+1')
     expect(slowRow.indexOf('slow<')).toBeLessThan(slowRow.indexOf('2 q · 300 ms'))
+    expect(flagged).toContain('flex min-w-0 items-center gap-1')
+    expect(flagged).toMatch(/class="min-w-0 truncate text-ink-muted">8 q/)
     expect(row({})).not.toContain(' q · ')
   })
   test('queries panel', () => {

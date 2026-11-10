@@ -41,17 +41,15 @@ export const RequestRow = ({
     >
       {formatDuration(item.durationMs)}
     </span>
-    <span className="truncate text-caption tabular-nums">
+    <span className="flex min-w-0 items-center gap-1 text-caption tabular-nums">
       {item.dbFlag !== undefined && (
-        <span className="inline-flex items-center gap-0.5 text-status-4xx">
+        <span className="inline-flex shrink-0 items-center gap-0.5 text-status-4xx">
           <Icon name="warn" />
           {item.dbFlag === 'repeated' ? 'N+1' : 'slow'}
         </span>
       )}
       {item.dbCount !== undefined && (
-        <span className={`text-ink-muted ${item.dbFlag !== undefined ? 'ml-1' : ''}`}>
-          {dbCaption(item.dbCount, item.dbMs ?? 0)}
-        </span>
+        <span className="min-w-0 truncate text-ink-muted">{dbCaption(item.dbCount, item.dbMs ?? 0)}</span>
       )}
     </span>
     <span className="text-caption text-ink-muted tabular-nums">
