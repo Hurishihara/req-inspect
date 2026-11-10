@@ -6,7 +6,7 @@ export interface State {
   pending: RequestSummary[]
   selectedId: string | null
   filter: string
-  conn: 'live' | 'reconnecting'
+  conn: 'live' | 'reconnecting' | 'unreachable' | 'disconnected'
 }
 export type Action =
   | { type: 'loaded'; items: RequestSummary[] }

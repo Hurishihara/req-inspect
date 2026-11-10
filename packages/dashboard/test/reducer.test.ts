@@ -61,4 +61,8 @@ test('select, filter and conn update state', () => {
   expect(s.filter).toBe('post')
   s = reducer(s, { type: 'conn', state: 'reconnecting' })
   expect(s.conn).toBe('reconnecting')
+  for (const c of ['unreachable', 'disconnected'] as const) {
+    s = reducer(s, { type: 'conn', state: c })
+    expect(s.conn).toBe(c)
+  }
 })
