@@ -63,8 +63,8 @@ export const createNodeCapture = (deps: NodeCaptureDeps) => {
     const finalize = (aborted: boolean): void => {
       if (done) return
       done = true
-      const dbRecord = sink.close()
       try {
+        const dbRecord = sink.close()
         const captured = snapshot()
         const reqBody = captureParsedBody(
           redactBody(hooks.body(), bodyKeys),

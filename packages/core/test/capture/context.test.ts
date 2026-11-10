@@ -129,3 +129,26 @@ test('offsets, durations, caps, totals and slow flags', () => {
   expect(rec?.flags.slow).toEqual([1])
   expect(rec?.totalMs).toBe(132)
 })
+
+test('a 1 MB fingerprint is capped for the event', () => {
+  const s = sink()
+  s.scope.track(input({ fingerprint: 'x'.repeat(1_000_000) }))
+  const rec = s.close()
+  expect(rec?.events[0]?.fingerprint.length).toBeLessThanOrEqual(2048)
+})
+
+test('a BigInt in a mongo document still stores the event with the plain statement', () => {
+  const s = sink()
+  s.scope.track(input({ system: 'mongodb', statement: 'insert users', document: { n: 1n } }))
+  expect(s.close()?.events[0]?.statement).toBe('insert users')
+})
+
+test('the scope is null once the sink is closed', async () => {
+  const s = sink()
+  await runInScope(s, async () => {
+    s.scope.track(input())
+    s.close()
+    await Promise.resolve()
+    expect(currentDbScope()).toBeNull()
+  })
+})

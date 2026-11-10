@@ -20,6 +20,16 @@ const normalizePath = (path: string): string => {
 
 const isNonEmptyString = (v: unknown): v is string => typeof v === 'string' && v.length > 0
 
+const dbNumber = (v: unknown, fallback: number, integer = false): number =>
+  typeof v === 'number' && Number.isFinite(v) && v >= 0 && (!integer || Number.isInteger(v)) ? v : fallback
+
+const resolveDb = (db: InspectorOptions['db']): InternalOptions['db'] => ({
+  maxEvents: dbNumber(db?.maxEvents, DB_DEFAULTS.maxEvents, true),
+  params: db?.params ?? DB_DEFAULTS.params,
+  slowMs: dbNumber(db?.slowMs, DB_DEFAULTS.slowMs),
+  repeatThreshold: dbNumber(db?.repeatThreshold, DB_DEFAULTS.repeatThreshold),
+})
+
 export const resolveOptions = (
   opts: InspectorOptions = {},
   env: NodeJS.ProcessEnv = process.env,
@@ -45,6 +55,6 @@ export const resolveOptions = (
       ]),
       bodyKeys: [...BODY_KEYS_DEFAULT, ...(opts.redact?.bodyKeys ?? [])],
     },
-    db: { ...DB_DEFAULTS, ...opts.db },
+    db: resolveDb(opts.db),
   }
 }

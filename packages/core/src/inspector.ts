@@ -38,7 +38,7 @@ export interface Inspector {
    * Starts capturing a request that `dispatch` answered `'capture'`: wraps `res.write` and `res.end` and
    * stores a redacted record when the response finishes or closes. When `next` is given it is called
    * exactly once, inside the request's DB context (see `currentDbScope`). Never throws; a failure warns once and
-   * leaves the response unaffected. Does nothing when the inspector is disabled.
+   * leaves the response unaffected. When the inspector is disabled it only calls `next`.
    */
   capture: (req: IncomingMessage, res: ServerResponse, hooks: CaptureHooks, next?: () => void) => void
 }
