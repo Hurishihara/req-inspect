@@ -1,11 +1,12 @@
 import { describe, expect, test } from 'bun:test'
 import { createRef } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import type { RequestSummary } from '@req-inspect/core'
+import type { DbEvent, RequestRecord, RequestSummary } from '@req-inspect/core'
 
 import { BodyView } from '../src/components/BodyView'
 import { DetailPane, DetailView } from '../src/components/DetailPane'
 import { JsonTree } from '../src/components/JsonTree'
+import { QueriesPanel } from '../src/components/QueriesPanel'
 import { RequestList } from '../src/components/RequestList'
 import { RequestRow } from '../src/components/RequestRow'
 import { initialState } from '../src/reducer'
@@ -314,5 +315,76 @@ describe('ThemeToggle', () => {
       <RequestList state={initialState} dispatch={noop} onClear={noop} filterRef={ref} />,
     )
     expect(list).toContain('aria-label="Theme: System"')
+  })
+})
+
+describe('database calls', () => {
+  const ev = (o: Partial<DbEvent> = {}): DbEvent => ({
+    system: 'postgresql',
+    operation: 'SELECT',
+    target: 'users',
+    statement: 'SELECT * FROM users WHERE id = $1',
+    offsetMs: 1,
+    durationMs: 2,
+    fingerprint: 'select * from users where id = ?',
+    ...o,
+  })
+  const dbRecord = (db: NonNullable<RequestRecord['db']>) => full({ durationMs: 100, db })
+  const events = Array.from({ length: 6 }, () => ev({ paramCount: 3 }))
+
+  test('row caption and flag', () => {
+    const row = (o: Partial<RequestSummary>) =>
+      renderToStaticMarkup(<RequestRow item={sum('r1', o)} selected={false} focusable onSelect={noop} />)
+    expect(row({ dbCount: 8, dbMs: 42 })).toContain('8 q · 42 ms')
+    const flagged = row({ dbCount: 8, dbMs: 42, dbFlag: 'repeated' })
+    expect(flagged).toContain('N+1')
+    expect(flagged).toContain('text-status-4xx')
+    expect(row({})).not.toContain(' q · ')
+  })
+  test('queries panel', () => {
+    const h = renderToStaticMarkup(
+      <QueriesPanel
+        record={dbRecord({
+          events: [...events.slice(0, 5), ev({ durationMs: 150, error: 'boom' })],
+          dropped: 20,
+          totalMs: 40,
+          flags: { repeated: [{ fingerprint: events[0].fingerprint, count: 6, first: 99 }], slow: [5] },
+        })}
+      />,
+    )
+    expect(h).toContain('26 queries · 40 ms · 40% of request time')
+    expect(h).toContain('Repeated query.')
+    expect(h).toContain('ran 6 times')
+    for (const c of ['#', 'Offset', 'Operation', 'Statement', 'Duration', 'Rows']) {
+      expect(h).toContain(`<th scope="col" class="py-1 pr-2 font-normal">${c}</th>`)
+    }
+    expect(h).toMatch(/text-status-4xx"?[^>]*>150 ms/)
+    expect(h).toMatch(/text-status-5xx[^>]*>boom/)
+    expect(h).toContain('3 params')
+    expect(h).toContain('Not all queries recorded.')
+    expect(h).toContain('20 more were made after the first 6.')
+  })
+  test('queries panel empty', () => {
+    const h = renderToStaticMarkup(<QueriesPanel record={full()} />)
+    expect(h).toContain('No database calls')
+    expect(h).toContain('@req-inspect/pg')
+    expect(h).toContain('@req-inspect/mongodb')
+  })
+  test('detail tabs order and count', () => {
+    const labels = (r: RequestRecord) =>
+      [
+        ...renderToStaticMarkup(<DetailView record={r} tab="overview" onTabChange={noop} />).matchAll(
+          /role="tab"[\s\S]*?<\/button>/g,
+        ),
+      ].map((m) => m[0])
+    const withDb = labels(dbRecord({ events, dropped: 0, totalMs: 1, flags: { repeated: [], slow: [] } }))
+    expect(withDb.map((s) => /(Overview|Request|Queries|Response)/.exec(s)?.[1])).toEqual([
+      'Overview',
+      'Request',
+      'Queries',
+      'Response',
+    ])
+    expect(withDb[2]).toContain('>6<')
+    expect(labels(full())[2]).not.toContain('ri-tab__count')
   })
 })

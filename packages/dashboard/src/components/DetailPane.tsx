@@ -13,13 +13,15 @@ import { StatusBadge } from '../ui/StatusBadge'
 import { Tabs } from '../ui/Tabs'
 import { BodyView } from './BodyView'
 import { JsonTree } from './JsonTree'
+import { QueriesPanel } from './QueriesPanel'
 
-type Tab = 'overview' | 'request' | 'response'
+type Tab = 'overview' | 'request' | 'queries' | 'response'
 type Loaded = { id: string; record: RequestRecord | null } | 'error'
 
-const TABS: { id: Tab; label: string }[] = [
+const TABS: { id: Tab; label: string; count?: number }[] = [
   { id: 'overview', label: 'Overview' },
   { id: 'request', label: 'Request' },
+  { id: 'queries', label: 'Queries' },
   { id: 'response', label: 'Response' },
 ]
 
@@ -177,7 +179,9 @@ export const DetailView = ({
   return (
     <section className={SECTION}>
       <Tabs
-        tabs={TABS}
+        tabs={TABS.map((t) =>
+          t.id === 'queries' && r.db ? { ...t, count: r.db.events.length + r.db.dropped } : t,
+        )}
         value={tab}
         onChange={(t) => {
           onTabChange(t as Tab)
@@ -237,6 +241,7 @@ export const DetailView = ({
             </div>
           </>
         )}
+        {tab === 'queries' && <QueriesPanel record={r} />}
         {tab === 'response' && (
           <>
             <SectionLabel>Headers</SectionLabel>

@@ -5,6 +5,7 @@ import { tabKeyIndex } from '../view'
 export interface TabItem {
   id: string
   label: string
+  count?: number
 }
 
 export const Tabs = ({
@@ -61,6 +62,11 @@ export const Tabs = ({
               }`}
             >
               {t.label}
+              {t.count !== undefined && (
+                <span className="ri-tab__count ml-1 text-caption text-ink-muted tabular-nums">
+                  {String(t.count)}
+                </span>
+              )}
             </button>
           )
         })}

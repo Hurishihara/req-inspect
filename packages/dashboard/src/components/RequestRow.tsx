@@ -1,6 +1,8 @@
 import type { RequestSummary } from '@req-inspect/core'
 
+import { dbCaption } from '../db'
 import { formatDuration } from '../format'
+import { Icon } from '../ui/Icon'
 import { StatusBadge } from '../ui/StatusBadge'
 import { isSlow } from '../view'
 
@@ -24,7 +26,7 @@ export const RequestRow = ({
     aria-selected={selected}
     tabIndex={focusable ? 0 : -1}
     onClick={onSelect}
-    className={`grid min-h-row w-full grid-cols-[56px_minmax(0,1fr)_44px_56px_72px] items-center gap-2 border-b border-border px-3 py-1 text-left hover:bg-hover ${
+    className={`grid min-h-row w-full grid-cols-[56px_minmax(0,1fr)_44px_56px_88px_72px] items-center gap-2 border-b border-border px-3 py-1 text-left hover:bg-hover ${
       selected ? 'bg-selected' : ''
     }`}
   >
@@ -38,6 +40,17 @@ export const RequestRow = ({
       className={`text-right text-caption tabular-nums ${isSlow(item.durationMs) ? 'text-status-4xx' : 'text-ink-muted'}`}
     >
       {formatDuration(item.durationMs)}
+    </span>
+    <span className="truncate text-caption tabular-nums">
+      {item.dbCount !== undefined && (
+        <span className="text-ink-muted">{dbCaption(item.dbCount, item.dbMs ?? 0)}</span>
+      )}
+      {item.dbFlag !== undefined && (
+        <span className="ml-1 inline-flex items-center gap-0.5 text-status-4xx">
+          <Icon name="warn" />
+          {item.dbFlag === 'repeated' ? 'N+1' : 'slow'}
+        </span>
+      )}
     </span>
     <span className="text-caption text-ink-muted tabular-nums">
       {new Date(item.startedAt).toLocaleTimeString()}
