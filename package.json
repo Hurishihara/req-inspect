@@ -10,6 +10,7 @@
     "test": "bun test packages/*/test",
     "test:int": "node --test packages/express/test/integration/*.int.mjs",
     "test:db": "node --test packages/pg/test/integration/*.int.mjs packages/mongodb/test/integration/*.int.mjs",
+    "test:db:docker": "node scripts/test-db-docker.mjs",
     "typecheck": "tsc -p packages/core && tsc -p packages/express && tsc -p packages/dashboard && tsc -p packages/pg && tsc -p packages/mongodb",
     "check:pkg": "node scripts/check-no-workspace-protocol.mjs && publint packages/core && publint packages/express && publint packages/pg && publint packages/mongodb && attw --pack packages/core && attw --pack packages/express && attw --pack packages/pg && attw --pack packages/mongodb",
     "release": "bun run build && changeset publish",
