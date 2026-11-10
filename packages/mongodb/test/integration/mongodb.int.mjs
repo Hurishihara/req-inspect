@@ -1,10 +1,11 @@
 import { test, before, after } from 'node:test'
 import assert from 'node:assert/strict'
-import { MongoClient } from 'mongodb'
 import mongoose from 'mongoose'
 import { inspector } from '../../../express/dist/index.js'
 import { instrumentMongo } from '../../dist/index.js'
 import { start, getRecords, findRecord } from '../../../express/test/integration/helpers.mjs'
+// MONGODB_PKG lets CI run the native-driver tests against driver 6 (alias mongodb6); default is the current driver.
+const { MongoClient } = await import(process.env.MONGODB_PKG ?? 'mongodb')
 
 const enabled = process.env.REQ_INSPECT_DB_IT === '1'
 const skip = enabled ? false : 'set REQ_INSPECT_DB_IT=1 (and start test/db/compose.yml) to run'

@@ -96,7 +96,7 @@ const client = new MongoClient(uri, { monitorCommands: true }) // required
 instrumentMongo(client)
 ```
 
-With Mongoose:
+With Mongoose (8 or 9):
 
 ```js
 import mongoose from 'mongoose'

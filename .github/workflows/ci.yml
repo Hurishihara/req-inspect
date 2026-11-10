@@ -45,7 +45,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:16
+        image: postgres:18
         env:
           POSTGRES_PASSWORD: postgres
         ports:
@@ -56,7 +56,7 @@ jobs:
           --health-timeout 5s
           --health-retries 10
       mongo:
-        image: mongo:7
+        image: mongo:9
         ports:
           - 27017:27017
     steps:
@@ -72,3 +72,26 @@ jobs:
       - run: bun run test:db
         env:
           REQ_INSPECT_DB_IT: 1
+
+  # Keeps the previous mongodb driver major (6) covered against the server it targets.
+  db-integration-mongodb6:
+    runs-on: ubuntu-latest
+    services:
+      mongo:
+        image: mongo:8
+        ports:
+          - 27017:27017
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: bun install --frozen-lockfile
+      - run: bun run build
+      - run: node --test packages/mongodb/test/integration/*.int.mjs
+        env:
+          REQ_INSPECT_DB_IT: 1
+          MONGODB_PKG: mongodb6
