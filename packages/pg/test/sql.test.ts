@@ -22,3 +22,14 @@ test('sqlTarget finds the first identifier after from/into/update/join', () => {
 test('sqlFingerprint collapses whitespace', () => {
   expect(sqlFingerprint('select *\n  from t where id = $1')).toBe('select * from t where id = $1')
 })
+
+test('sqlFingerprint replaces string and numeric literals with ?', () => {
+  expect(sqlFingerprint('select * from u where id = 1')).toBe(sqlFingerprint('select * from u where id = 2'))
+  expect(sqlFingerprint('select * from u where id = 1')).toBe('select * from u where id = ?')
+  expect(sqlFingerprint("select * from u where name = 'a''b'")).toBe('select * from u where name = ?')
+  expect(sqlFingerprint('select * from u where id = $1 and n = 2.5e3')).toBe(
+    'select * from u where id = $1 and n = ?',
+  )
+  expect(sqlFingerprint('select t1.id from t1 where t1.x = 3')).toBe('select t1.id from t1 where t1.x = ?')
+  expect(sqlFingerprint('select "col 1" from t where a = \'x  y\'')).toBe('select "col 1" from t where a = ?')
+})

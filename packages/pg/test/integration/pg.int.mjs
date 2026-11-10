@@ -24,7 +24,7 @@ before(async () => {
   if (!enabled) return
   const express = (await import('express5')).default
   instrumentPg(pg)
-  pool = new pg.Pool({ connectionString: DATABASE_URL })
+  pool = new pg.Pool({ connectionString: DATABASE_URL, max: 2 })
   // startup queries run outside any request, so they must not be recorded
   await pool.query('drop table if exists users')
   await pool.query('create table users (id integer primary key, name text)')
@@ -58,6 +58,14 @@ before(async () => {
       out.push((await pool.query('select name from users where id = $1', [id])).rows[0])
     }
     res.json(out)
+  })
+  app.get('/contended', async (_req, res) => {
+    const rows = await Promise.all(
+      [1, 2, 3, 4, 5, 6].map(
+        async (id) => (await pool.query('select name from users where id = $1', [id])).rows[0],
+      ),
+    )
+    res.json(rows)
   })
   app.get('/bad-sql', async (_req, res) => {
     try {
@@ -116,6 +124,13 @@ test('six single-row selects flag as repeated', { skip }, async () => {
   const summary = (await getRecords(server.base)).find((x) => x.url === '/n-plus-one')
   assert.equal(summary.dbCount, 6)
   assert.equal(summary.dbFlag, 'repeated')
+})
+
+test('six concurrent queries on a two-connection pool all land on their request', { skip }, async () => {
+  await fetch(`${server.base}/contended`)
+  const rec = await record('/contended')
+  assert.equal(rec.db.events.length, 6)
+  assert.equal(rec.db.flags.repeated[0].count, 6)
 })
 
 test('bad SQL records an error and the app still answers its own 500', { skip }, async () => {
