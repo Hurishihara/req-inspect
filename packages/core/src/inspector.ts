@@ -100,6 +100,7 @@ const freezeOptions = (o: InternalOptions): ResolvedOptions =>
     ...o,
     auth: o.auth === null ? null : Object.freeze({ ...o.auth }),
     ignore: Object.freeze([...o.ignore]),
+    db: Object.freeze({ ...o.db }),
     redact: Object.freeze({
       headers: new Set(o.redact.headers),
       bodyKeys: Object.freeze([...o.redact.bodyKeys]),

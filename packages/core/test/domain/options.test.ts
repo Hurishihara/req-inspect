@@ -1,5 +1,6 @@
 import { expect, test } from 'bun:test'
 
+import { DB_DEFAULTS } from '../../src/domain/db.js'
 import { resolveOptions } from '../../src/domain/options.js'
 
 test('defaults', () => {
@@ -50,4 +51,13 @@ test('path that normalizes to the root is rejected', () => {
       new TypeError('[req-inspect] path must not be the root'),
     )
   }
+})
+
+test('db options default and merge', () => {
+  expect(resolveOptions({}).db).toEqual(DB_DEFAULTS)
+  const o = resolveOptions({ db: { slowMs: 50 } }).db
+  expect(o.slowMs).toBe(50)
+  expect(o.maxEvents).toBe(100)
+  expect(o.params).toBe(false)
+  expect(o.repeatThreshold).toBe(5)
 })

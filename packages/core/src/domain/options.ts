@@ -1,3 +1,4 @@
+import { DB_DEFAULTS } from './db.js'
 import type { InspectorOptions, InternalOptions } from './types.js'
 
 export const DEFAULT_PATH = '/_inspect'
@@ -44,5 +45,6 @@ export const resolveOptions = (
       ]),
       bodyKeys: [...BODY_KEYS_DEFAULT, ...(opts.redact?.bodyKeys ?? [])],
     },
+    db: { ...DB_DEFAULTS, ...opts.db },
   }
 }
