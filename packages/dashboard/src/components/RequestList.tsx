@@ -25,12 +25,14 @@ export const RequestList = ({
   onClear,
   filterRef,
   focusIdRef,
+  onReconnect,
 }: {
   state: State
   dispatch: Dispatch<Action>
   onClear: () => void
   filterRef: RefObject<HTMLInputElement | null>
   focusIdRef?: MutableRefObject<string | null>
+  onReconnect?: () => void
 }) => {
   const rows = state.items.filter((r) => matchesFilter(r, state.filter))
   const rowEls = useRef(new Map<string, HTMLButtonElement>())
@@ -78,7 +80,12 @@ export const RequestList = ({
         <Button variant="danger" icon="trash" onClick={onClear}>
           Clear
         </Button>
-        <LiveIndicator conn={state.conn} paused={state.paused} pending={state.pending.length} />
+        <LiveIndicator
+          conn={state.conn}
+          paused={state.paused}
+          pending={state.pending.length}
+          onReconnect={onReconnect}
+        />
         <ThemeToggle />
       </div>
       {reason === 'waiting' && (

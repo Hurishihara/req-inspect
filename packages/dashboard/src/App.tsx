@@ -11,6 +11,7 @@ import { DetailPane } from './components/DetailPane'
 export const App = () => {
   const [state, dispatch] = useReducer(reducer, { ...initialState, selectedId: idFromHash(location.hash) })
   const prevConn = useRef(state.conn)
+  const reconnectRef = useRef<() => void>(() => undefined)
   const filterRef = useRef<HTMLInputElement>(null)
   const focusIdRef = useRef<string | null>(null)
   useKeyboardNav({ filterRef })
@@ -25,7 +26,7 @@ export const App = () => {
       .catch(() => {
         /* list unavailable: the stream keeps the view live */
       })
-    const unsub = subscribe(
+    const sub = subscribe(
       (item) => {
         dispatch({ type: 'received', item })
       },
@@ -33,14 +34,15 @@ export const App = () => {
         dispatch({ type: 'conn', state: conn })
       },
     )
+    reconnectRef.current = sub.reconnect
     return () => {
       alive = false
-      unsub()
+      sub.close()
     }
   }, [])
 
   useEffect(() => {
-    if (prevConn.current === 'reconnecting' && state.conn === 'live') {
+    if (prevConn.current !== 'live' && state.conn === 'live') {
       fetchList()
         .then((items) => {
           dispatch({ type: 'loaded', items })
@@ -86,6 +88,9 @@ export const App = () => {
         dispatch={dispatch}
         filterRef={filterRef}
         focusIdRef={focusIdRef}
+        onReconnect={() => {
+          reconnectRef.current()
+        }}
         onClear={() => {
           void onClear()
         }}

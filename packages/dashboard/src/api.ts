@@ -20,21 +20,70 @@ export const clearAll = async (): Promise<void> => {
   if (!res.ok) throw new Error(`clear failed: ${String(res.status)}`)
 }
 
+const UNREACHABLE_AFTER_MS = 15000
+const CLOSED = 2
+
+export const connFromError = (
+  readyState: number,
+  retryingSinceMs: number | null,
+  nowMs: number,
+): State['conn'] => {
+  if (readyState === CLOSED) return 'disconnected'
+  if (retryingSinceMs !== null && nowMs - retryingSinceMs >= UNREACHABLE_AFTER_MS) return 'unreachable'
+  return 'reconnecting'
+}
+
 export const subscribe = (
   onRecord: (s: RequestSummary) => void,
   onConn: (c: State['conn']) => void,
-): (() => void) => {
-  const es = new EventSource('./api/stream')
-  es.addEventListener('record', (e) => {
-    onRecord(JSON.parse(e.data as string) as RequestSummary)
-  })
-  es.onopen = () => {
-    onConn('live')
+): { close: () => void; reconnect: () => void } => {
+  let es: EventSource | null = null
+  let retryingSince: number | null = null
+  let timer: ReturnType<typeof setTimeout> | null = null
+
+  const clearTimer = () => {
+    if (timer !== null) clearTimeout(timer)
+    timer = null
   }
-  es.onerror = () => {
-    onConn('reconnecting')
+
+  const open = () => {
+    const source = new EventSource('./api/stream')
+    es = source
+    source.addEventListener('record', (e) => {
+      onRecord(JSON.parse(e.data as string) as RequestSummary)
+    })
+    source.onopen = () => {
+      clearTimer()
+      retryingSince = null
+      onConn('live')
+    }
+    source.onerror = () => {
+      const now = Date.now()
+      retryingSince ??= now
+      onConn(connFromError(source.readyState, retryingSince, now))
+      if (source.readyState === EventSource.CONNECTING && timer === null) {
+        timer = setTimeout(() => {
+          timer = null
+          if (source.readyState !== EventSource.OPEN) {
+            onConn(connFromError(source.readyState, retryingSince, Date.now()))
+          }
+        }, UNREACHABLE_AFTER_MS)
+      }
+    }
   }
-  return () => {
-    es.close()
+
+  open()
+  return {
+    close: () => {
+      clearTimer()
+      es?.close()
+    },
+    reconnect: () => {
+      clearTimer()
+      es?.close()
+      retryingSince = null
+      open()
+      onConn('reconnecting')
+    },
   }
 }

@@ -164,6 +164,15 @@ describe('LiveIndicator', () => {
     expect(renderToStaticMarkup(<LiveIndicator conn="reconnecting" paused={false} pending={0} />)).toContain(
       'Reconnecting…',
     )
+    const unreachable = renderToStaticMarkup(<LiveIndicator conn="unreachable" paused={false} pending={0} />)
+    expect(unreachable).toContain('retrying')
+    expect(unreachable).toContain('bg-signal-warn')
+    const gone = renderToStaticMarkup(<LiveIndicator conn="disconnected" paused={false} pending={0} />)
+    expect(gone).toContain('Disconnected')
+    expect(gone).toContain('bg-status-5xx')
+    expect(gone).toMatch(/<button[^>]*>Reconnect<\/button>/)
+    expect(gone.indexOf('</span></span>')).toBeLessThan(gone.indexOf('<button'))
+    expect(unreachable).not.toContain('<button')
     const paused = renderToStaticMarkup(<LiveIndicator conn="live" paused pending={4} />)
     expect(paused).toContain('Paused')
     expect(paused).toContain('<span aria-hidden="true"> · 4 waiting</span>')
