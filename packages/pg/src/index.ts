@@ -22,6 +22,7 @@ interface Loose {
   on?: unknown
   listenerCount?: unknown
   submit?: unknown
+  callback?: unknown
   then?: unknown
 }
 
@@ -87,13 +88,26 @@ const wrap = (original: QueryFn): QueryFn =>
     }
 
     const last = args.length - 1
-    const callback = args[last]
-    if (typeof callback === 'function') {
-      args[last] = function (this: unknown, ...cbArgs: unknown[]): unknown {
+    const wrapCallback =
+      (callback: QueryFn) =>
+      (...cbArgs: unknown[]): unknown => {
         const [err, result] = cbArgs
         record(err ? { error: messageOf(err) } : { rows: rowsOf(result) })
-        return (callback as QueryFn).apply(this, cbArgs)
+        return callback.apply(this, cbArgs)
       }
+    let hasCallback = false
+    const trailing = args[last]
+    if (typeof trailing === 'function') {
+      hasCallback = true
+      args[last] = wrapCallback(trailing as QueryFn)
+    } else if (
+      isObject(args[0]) &&
+      typeof args[0].callback === 'function' &&
+      typeof args[0].submit !== 'function'
+    ) {
+      // pg also accepts the callback inside the config object; copy it so the caller's object is untouched.
+      hasCallback = true
+      args[0] = { ...args[0], callback: wrapCallback(args[0].callback as QueryFn) }
     }
 
     let result: unknown
@@ -105,7 +119,7 @@ const wrap = (original: QueryFn): QueryFn =>
     }
 
     try {
-      if (typeof callback === 'function') return result
+      if (hasCallback) return result
       if (isObject(result) && typeof result.submit === 'function' && isEmitter(result)) {
         result.on('end', (res: unknown) => {
           record({ rows: rowsOf(res) })
@@ -116,12 +130,15 @@ const wrap = (original: QueryFn): QueryFn =>
           if (result.listenerCount('error') <= 1) throw err
         })
       } else if (isObject(result) && typeof result.then === 'function') {
-        void (result as unknown as Promise<unknown>).then(
+        // Return a derived promise: same value or rejection, and an ignored rejection still surfaces as unhandled.
+        return (result as unknown as Promise<unknown>).then(
           (res) => {
             record({ rows: rowsOf(res) })
+            return res
           },
           (err: unknown) => {
             record({ error: messageOf(err) })
+            throw err
           },
         )
       }

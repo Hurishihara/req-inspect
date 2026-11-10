@@ -125,6 +125,21 @@ describe('events', () => {
   })
 })
 
+test('a reply that throws on access never reaches the driver', async () => {
+  const client = instrumented()
+  const hostile = new Proxy(
+    {},
+    {
+      get: () => {
+        throw new Error('hostile')
+      },
+    },
+  )
+  await inRequest(async () => {
+    await command(client, 'find', {}, { ok: true, reply: hostile })
+  })
+})
+
 test('a client without monitorCommands warns once and gets no listeners', () => {
   const warn = spyOn(console, 'warn').mockImplementation(() => undefined)
   try {
