@@ -19,17 +19,21 @@ export const inspector = (options: InspectorOptions = {}): RequestHandler => {
         next()
         return
       case 'capture':
-        insp.capture(req, res, {
-          route: () => {
-            // req.route is undefined until Express matches a route, whatever its declared type says.
-            const route = req.route as { path: unknown } | undefined
-            return route ? `${req.baseUrl}${String(route.path)}` : null
+        insp.capture(
+          req,
+          res,
+          {
+            route: () => {
+              // req.route is undefined until Express matches a route, whatever its declared type says.
+              const route = req.route as { path: unknown } | undefined
+              return route ? `${req.baseUrl}${String(route.path)}` : null
+            },
+            params: () => ({ ...req.params }),
+            query: () => req.query,
+            body: (): unknown => req.body,
           },
-          params: () => ({ ...req.params }),
-          query: () => req.query,
-          body: (): unknown => req.body,
-        })
-        next()
+          next,
+        )
     }
   }
 }
