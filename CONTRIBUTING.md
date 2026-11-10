@@ -73,3 +73,12 @@ An adapter connects a framework to the inspector in three steps.
 Redaction happens in core: hand over raw values and do not redact in the adapter. `capture` never throws; if something fails it warns once and the response is unaffected.
 
 See `packages/express/src/index.ts` for a complete adapter.
+
+## Writing a database integration
+
+Packages such as `@req-inspect/pg` and `@req-inspect/mongodb` report queries through `currentDbScope()` from `@req-inspect/core`. The contract:
+
+1. Call `currentDbScope()` once, when the query starts. It returns `null` outside a request or when the inspector is disabled; in that case call the original function untouched and return its result unchanged.
+2. Keep the scope and read `scope.now()` as the start time.
+3. Call `scope.track(event)` exactly once, when the query ends (success or error). It is safe from any async context and ignored after the response has finished.
+4. Never throw: wrap your own tracking code so a failure cannot change the behaviour or result of the user's query, and never alter what the original returns or rejects with.
