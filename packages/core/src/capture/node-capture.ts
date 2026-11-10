@@ -133,10 +133,14 @@ export const createNodeCapture = (deps: NodeCaptureDeps) => {
     }
 
     try {
-      noteRequest()
       install()
     } catch (err) {
       warnOnce('capture', err)
+    }
+    try {
+      noteRequest()
+    } catch (err) {
+      warnOnce('context', err)
     }
     if (next) runInScope(sink, next)
   }
