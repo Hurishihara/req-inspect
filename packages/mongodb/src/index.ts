@@ -1,4 +1,4 @@
-import { currentDbScope } from '@req-inspect/core'
+import { currentDbScope, watchDbContext } from '@req-inspect/core'
 
 import { createPending } from './pending.js'
 import { commandDocument, keyShape, SKIPPED_COMMANDS } from './shape.js'
@@ -67,11 +67,13 @@ export const instrumentMongo = (client: MongoClientLike): void => {
     if (seen.has(client)) return
     seen.add(client)
     const pending = createPending()
+    const watch = watchDbContext('mongodb')
 
     client.on('commandStarted', (e: StartedEvent) => {
       try {
         if (SKIPPED_COMMANDS.has(e.commandName)) return
         const scope = currentDbScope()
+        watch.observe(scope !== null)
         if (!scope) return
         const target = targetOf(e.commandName, e.command)
         const document = commandDocument(e.command)

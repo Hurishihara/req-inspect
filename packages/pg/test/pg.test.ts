@@ -1,7 +1,7 @@
 import { EventEmitter } from 'node:events'
 
 import { currentDbScope } from '@req-inspect/core'
-import { describe, expect, test } from 'bun:test'
+import { afterEach, describe, expect, jest, spyOn, test } from 'bun:test'
 
 import { instrumentPg } from '../src/index.js'
 import { inRequest } from './helpers.js'
@@ -228,4 +228,32 @@ test('outside any scope the original gets identical arguments', async () => {
   expect(calls[0]?.[0]).toBe('select 1')
   expect(calls[0]?.[1]).toBe(values)
   expect(calls[0]).toHaveLength(2)
+})
+
+describe('queries that never land in a request', () => {
+  afterEach(() => {
+    jest.restoreAllMocks()
+  })
+
+  test('a query inside a request first keeps the watcher quiet', async () => {
+    const warn = spyOn(console, 'warn').mockImplementation(() => undefined)
+    const { client } = makeClient()
+    await inRequest(async () => {
+      await client.query('select 1')
+    })
+    const now = Date.now() + 60_000
+    spyOn(Date, 'now').mockImplementation(() => now)
+    for (let i = 0; i < 30; i++) await client.query('select 1')
+    expect(warn).not.toHaveBeenCalled()
+  })
+
+  test('20 queries outside any request after 30 s warn once naming pg', async () => {
+    const warn = spyOn(console, 'warn').mockImplementation(() => undefined)
+    const { client } = makeClient()
+    const now = Date.now() + 30_000
+    spyOn(Date, 'now').mockImplementation(() => now)
+    for (let i = 0; i < 30; i++) await client.query('select 1')
+    expect(warn).toHaveBeenCalledTimes(1)
+    expect(String(warn.mock.calls[0]?.[0])).toContain('pg')
+  })
 })

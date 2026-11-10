@@ -1,6 +1,6 @@
 import { AsyncResource } from 'node:async_hooks'
 
-import { currentDbScope, type DbEventInput, type DbScope } from '@req-inspect/core'
+import { currentDbScope, watchDbContext, type DbEventInput, type DbScope } from '@req-inspect/core'
 
 import { sqlFingerprint, sqlOperation, sqlTarget } from './sql.js'
 
@@ -15,6 +15,8 @@ interface Emitter {
   on: (event: string, fn: (...a: unknown[]) => void) => unknown
   listenerCount: (event: string) => number
 }
+
+type Watcher = ReturnType<typeof watchDbContext>
 
 const MARKER = Symbol.for('req-inspect.pg')
 
@@ -56,9 +58,10 @@ const safeScope = (): DbScope | null => {
   }
 }
 
-const wrap = (original: QueryFn): QueryFn =>
+const wrap = (original: QueryFn, watch: Watcher): QueryFn =>
   function (this: unknown, ...args: unknown[]): unknown {
     const scope = safeScope()
+    watch.observe(scope !== null)
     if (!scope) return original.apply(this, args)
 
     const live = scope
@@ -173,7 +176,7 @@ export const instrumentPg = (pg: PgLike): void => {
     const proto = pg.Client.prototype as Record<symbol, unknown> & { query: QueryFn }
     if (proto[MARKER] || typeof proto.query !== 'function') return
     Object.defineProperty(proto, MARKER, { value: true })
-    proto.query = wrap(proto.query)
+    proto.query = wrap(proto.query, watchDbContext('pg'))
   } catch (err) {
     console.warn('req-inspect: could not instrument pg:', err)
   }

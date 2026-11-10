@@ -1,6 +1,6 @@
 import { EventEmitter } from 'node:events'
 
-import { describe, expect, spyOn, test } from 'bun:test'
+import { afterEach, describe, expect, jest, spyOn, test } from 'bun:test'
 import { MongoClient } from 'mongodb'
 
 import { instrumentMongo, type MongoClientLike } from '../src/index.js'
@@ -193,4 +193,37 @@ test('updates with different filters on one collection get different fingerprint
   })
   expect(events).toHaveLength(2)
   expect(events[0]?.fingerprint).not.toBe(events[1]?.fingerprint)
+})
+
+describe('commands that never land in a request', () => {
+  afterEach(() => {
+    jest.restoreAllMocks()
+  })
+
+  const fire = (client: Client, n: number): void => {
+    for (let i = 0; i < n; i++)
+      client.emit('commandStarted', { requestId: nextId++, commandName: 'find', command: { find: 'users' } })
+  }
+
+  test('a command inside a request first keeps the watcher quiet', async () => {
+    const warn = spyOn(console, 'warn').mockImplementation(() => undefined)
+    const client = instrumented()
+    await inRequest(async () => {
+      await command(client, 'find', {}, { ok: true, reply: { cursor: { firstBatch: [] } } })
+    })
+    const now = Date.now() + 60_000
+    spyOn(Date, 'now').mockImplementation(() => now)
+    fire(client, 30)
+    expect(warn).not.toHaveBeenCalled()
+  })
+
+  test('20 commands outside any request after 30 s warn once naming mongodb', () => {
+    const warn = spyOn(console, 'warn').mockImplementation(() => undefined)
+    const client = instrumented()
+    const now = Date.now() + 30_000
+    spyOn(Date, 'now').mockImplementation(() => now)
+    fire(client, 30)
+    expect(warn).toHaveBeenCalledTimes(1)
+    expect(String(warn.mock.calls[0]?.[0])).toContain('mongodb')
+  })
 })
