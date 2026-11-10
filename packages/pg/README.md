@@ -8,7 +8,7 @@ node-postgres (`pg`) query tracking for [req-inspect](https://github.com/Hurishi
 npm i @req-inspect/pg
 ```
 
-Requires `@req-inspect/core` and `pg` 8 as peer dependencies.
+Requires `pg` 8 as a peer dependency; `@req-inspect/core` is installed with this package.
 
 ## Usage
 
@@ -28,6 +28,8 @@ For each query: the SQL text, the operation (first keyword, such as `SELECT`), t
 ## Limitations
 
 - `pg-native` is not supported.
+- `Pool.prototype.connect` is wrapped only to bind its callback to the caller's request context, so queries run by a queued waiter are attributed to the right request. `Pool.prototype.query` is not wrapped.
+- Statement text is stored as sent, so ORMs that inline values (such as Sequelize) show them in the statement even with parameters off.
 - The target table is a best-effort match on `from`, `into`, `update` or `join`; it can be empty.
 
 See the [root README](https://github.com/Hurishihara/req-inspect#database-calls) for options and security.

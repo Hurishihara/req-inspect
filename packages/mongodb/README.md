@@ -8,7 +8,7 @@ MongoDB command tracking for [req-inspect](https://github.com/Hurishihara/req-in
 npm i @req-inspect/mongodb
 ```
 
-Requires `@req-inspect/core` and `mongodb` 6 as peer dependencies.
+Requires `mongodb` 6 as a peer dependency; `@req-inspect/core` is installed with this package.
 
 ## Usage
 

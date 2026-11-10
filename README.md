@@ -67,7 +67,7 @@ import { instrumentPg } from '@req-inspect/pg'
 instrumentPg(pg) // once, at startup
 ```
 
-`Client.prototype.query` is wrapped, so `pool.query`, transactions and anything built on `pg` is covered. `pg-native` is not supported.
+`Client.prototype.query` is wrapped, so `pool.query`, transactions and anything built on `pg` is covered. `Pool.prototype.connect` is also wrapped, only to bind its callback to the caller's request context; `Pool.prototype.query` is not wrapped. `pg-native` is not supported.
 
 Drizzle on `pg` needs nothing more:
 
@@ -119,7 +119,7 @@ Pass them as `inspector({ db: { ... } })`.
 | `slowMs`          | `number`  | `100`   | A query taking at least this many milliseconds is flagged slow.                       |
 | `repeatThreshold` | `number`  | `5`     | A statement seen this many times or more in one request is flagged as repeated (N+1). |
 
-SQL parameters are off by default because positional values cannot be redacted safely. MongoDB command bodies are always redacted with `redact.bodyKeys`.
+SQL parameters are off by default because positional values cannot be redacted safely. Statement text is stored as sent, so ORMs that inline values (such as Sequelize) show them in the statement even with `params` off. MongoDB command bodies are always redacted with `redact.bodyKeys`.
 
 ## Security
 
