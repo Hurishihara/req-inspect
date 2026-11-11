@@ -1,5 +1,11 @@
 # @req-inspect/core
 
+## 0.4.1
+
+### Patch Changes
+
+- c3e8f06: Warn when two incompatible @req-inspect/core copies are installed, and when pg or MongoDB queries never land inside an inspected request (for example an outdated @req-inspect/express or inspector() mounted after routes).
+
 ## 0.4.0
 
 ### Minor Changes
