@@ -17,15 +17,80 @@ const FINGERPRINT_MAX = 2048
 const ERROR_MAX = 500
 const CONTEXT_KEY = Symbol.for('req-inspect.context')
 
-interface ContextHolder {
-  [CONTEXT_KEY]?: AsyncLocalStorage<DbSink>
+export const CONTEXT_VERSION = 1
+
+const META_KEY = Symbol.for('req-inspect.context.meta')
+
+interface ContextMeta {
+  version: number
+  requestsSeen: number
 }
 
-// Shared through globalThis so a second copy of core in node_modules reuses the same storage.
-const getAls = (): AsyncLocalStorage<DbSink> => {
-  const g = globalThis as ContextHolder
-  return (g[CONTEXT_KEY] ??= new AsyncLocalStorage<DbSink>())
+interface ContextHolder {
+  [CONTEXT_KEY]?: unknown
+  [META_KEY]?: unknown
 }
+
+interface PrivateState {
+  storage: AsyncLocalStorage<DbSink>
+  meta: ContextMeta
+}
+
+let privateState: PrivateState | undefined
+let warnedIncompatible = false
+
+/** Test hook: forget the module-local state and the one-time warning. */
+export const resetContextState = (): void => {
+  privateState = undefined
+  warnedIncompatible = false
+}
+
+const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null
+
+const isStorage = (v: unknown): v is AsyncLocalStorage<DbSink> =>
+  isObject(v) && typeof v.run === 'function' && typeof v.getStore === 'function'
+
+const isMeta = (v: unknown): v is ContextMeta =>
+  isObject(v) && typeof v.version === 'number' && typeof v.requestsSeen === 'number'
+
+const incompatible = (theirs: string): PrivateState => {
+  if (!warnedIncompatible) {
+    warnedIncompatible = true
+    console.warn(
+      `req-inspect: two incompatible versions of @req-inspect/core are installed (context format ${theirs} and ${String(CONTEXT_VERSION)}). Database calls may not be recorded. Run \`npm update @req-inspect\` so all packages use one version.`,
+    )
+  }
+  return (privateState ??= {
+    storage: new AsyncLocalStorage<DbSink>(),
+    meta: { version: CONTEXT_VERSION, requestsSeen: 0 },
+  })
+}
+
+// The slot stays a bare AsyncLocalStorage, exactly as core 0.4.0 creates it, so any copy can share it.
+// Metadata (format version, request count) lives under a separate key that 0.4.0 copies simply ignore.
+const getState = (): { storage: AsyncLocalStorage<DbSink>; meta: ContextMeta } => {
+  const g = globalThis as ContextHolder
+  const slot = (g[CONTEXT_KEY] ??= new AsyncLocalStorage<DbSink>())
+  if (!isStorage(slot)) return incompatible('unknown')
+  const meta = (g[META_KEY] ??= { version: CONTEXT_VERSION, requestsSeen: 0 })
+  if (!isMeta(meta)) return incompatible('unknown')
+  if (meta.version !== CONTEXT_VERSION) return incompatible(String(meta.version))
+  return { storage: slot, meta }
+}
+
+/** Counts one captured request. */
+export const noteRequest = (): void => {
+  getState().meta.requestsSeen++
+}
+
+/** Requests captured so far, read without creating anything; 0 when unknown. */
+export const peekRequestsSeen = (): number => {
+  const meta = (globalThis as ContextHolder)[META_KEY]
+  if (isMeta(meta) && meta.version === CONTEXT_VERSION) return meta.requestsSeen
+  return privateState?.meta.requestsSeen ?? 0
+}
+
+const getAls = (): AsyncLocalStorage<DbSink> => getState().storage
 
 // JSON.stringify returns undefined for some inputs despite its declared type.
 const stringify = (v: unknown): string | undefined => JSON.stringify(v)

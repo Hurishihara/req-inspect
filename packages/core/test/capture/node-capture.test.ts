@@ -311,3 +311,30 @@ test('next is still called once when setup fails', () => {
   warn.mockRestore()
   expect(calls).toBe(1)
 })
+
+test('requestsSeen increments once per captured request', async () => {
+  const KEY = Symbol.for('req-inspect.context.meta')
+  const before = (globalThis as unknown as Record<symbol, { requestsSeen?: number } | undefined>)[KEY]
+  const start = before?.requestsSeen ?? 0
+  await run({ respond: (_req, res) => res.end('x') })
+  await run({ respond: (_req, res) => res.end('y') })
+  const slot = (globalThis as unknown as Record<symbol, { requestsSeen: number }>)[KEY]
+  expect(slot.requestsSeen).toBe(start + 2)
+})
+
+test('a frozen context meta object does not block capture', async () => {
+  const KEY = Symbol.for('req-inspect.context.meta')
+  const g = globalThis as unknown as Record<symbol, unknown>
+  const saved = g[KEY]
+  g[KEY] = Object.freeze({ version: 1, requestsSeen: 0 })
+  const warn = spyOn(console, 'warn').mockImplementation(() => undefined)
+  try {
+    const { drafts, status } = await run({ respond: (_req, res) => res.end('ok') })
+    expect(status).toBe(200)
+    expect(drafts).toHaveLength(1)
+  } finally {
+    warn.mockRestore()
+    if (saved === undefined) Reflect.deleteProperty(g, KEY)
+    else g[KEY] = saved
+  }
+})
